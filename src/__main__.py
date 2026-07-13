@@ -16,6 +16,12 @@ class Connection:
         self.zone1 = zone1
         self.zone2 = zone2
 
+    def other_side(self, zone_name: str) -> str:
+        if zone_name == self.zone1:
+            return self.zone2
+        
+        return self.zone1
+
 class Graph:
     def __init__(self) -> None:
         self.zones: dict[str, Zone] = {}
@@ -26,6 +32,14 @@ class Graph:
 
     def add_connection(self, connection: Connection) -> None:
         self.connections.append(connection)
+
+    def get_neighdors(self, zone_name: str) -> list[str]:
+        neighdors = []
+
+        for connection in self.connections:
+            if connection.zone1 == zone_name or connection.zone2 == zone_name:
+                neighdors.append(connection.other_side(zone_name))
+        return neighdors
 
 
 def extract_zone_type(rest: str) -> str:
@@ -52,7 +66,7 @@ def build_graph_from_map(filepath: str) -> tuple[int, Graph]:
             continue
 
         if line.startswith("nb_drones:"):
-            nb_drones = int(line.split(":")[1].split())
+            nb_drones = int(line.split(":")[1].strip())
         
         elif line.startswith(("start_hub:", "end_hub:", "hub:")):
             rest = line.split(":", 1)[1].strip()
@@ -70,5 +84,53 @@ def build_graph_from_map(filepath: str) -> tuple[int, Graph]:
     return nb_drones, graph
 
 
+def find_cheapest_path(graph: Graph, start: str, end: str) -> tuple[list[str], int]:
+    infinity = float("inf")
+    costs = {name: infinity for name in graph.zones}
+    costs[start] = 0
+    previous: dict[str, str] = {}
+    unvisited = set(graph.zones.keys())
+
+    while unvisited:
+        current = min(unvisited, key=lambda name: costs[name])
+
+        if costs[current] == infinity:
+            break
+
+        if current == end:
+            break
+
+        unvisited.remove(current)
+
+        for neighdor_name in graph.get_neighdors(current):
+            neighdor_zone = graph.zones[neighdor_name]
+
+            if neighdor_zone.zone_type == "blocked":
+                continue
+
+            move_cost = MOVE_COST[neighdor_zone.zone_type]
+            new_cost = costs[current] + move_cost
+
+            if new_cost < costs[neighdor_name]:
+                costs[neighdor_name] = new_cost
+                previous[neighdor_name] = current
+
+    path = [end]
+    print(graph.zones)
+    print(graph.connections)
+    print(previous)
+    print(costs)
+    while path[-1] != start:
+        path.append(previous[path[-1]])
+    path.reverse()
+
+    return path, costs[end]
+
+
 if __name__ == "__main__":
-    main()
+    nb_drones, graph = build_graph_from_map("01_linear_path.txt")
+ 
+    path, total_cost = find_cheapest_path(graph, "start", "goal")
+ 
+    print("一番安い道:", " → ".join(path))
+    print("合計コスト:", total_cost, "ターン")

@@ -116,10 +116,6 @@ def find_cheapest_path(graph: Graph, start: str, end: str) -> tuple[list[str], i
                 previous[neighdor_name] = current
 
     path = [end]
-    print(graph.zones)
-    print(graph.connections)
-    print(previous)
-    print(costs)
     while path[-1] != start:
         path.append(previous[path[-1]])
     path.reverse()

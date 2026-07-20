@@ -1,3 +1,5 @@
+from typing import Optional
+
 MOVE_COST = {
     "normal": 1,
     "priority": 1,
@@ -6,7 +8,12 @@ MOVE_COST = {
 
 
 class Zone:
-    def __init__(self, name:str, zone_type: str = "normal") -> None:
+    def __init__(
+            self,
+            name:str,
+            zone_type: str = "normal",
+            max_drones: Optional[int] = 1,
+        ) -> None:
         self.name = name
         self.zone_type = zone_type
 
@@ -40,6 +47,12 @@ class Graph:
             if connection.zone1 == zone_name or connection.zone2 == zone_name:
                 neighdors.append(connection.other_side(zone_name))
         return neighdors
+    
+    def find_connection(self, zone_a :str, zone_b: str) -> Connection:
+        for connection in self.connections:
+            if {connection.zone1, connection.zone2} == {zone_a, zone_b}:
+                return connection
+        raise ValueError(f"Not found connection to {zone_a} and {zone_b}")
 
 
 def extract_zone_type(rest: str) -> str:
@@ -123,10 +136,38 @@ def find_cheapest_path(graph: Graph, start: str, end: str) -> tuple[list[str], i
     return path, costs[end]
 
 
+def simulate_single_drone(graph: Graph, path: list[str]) -> None:
+    path_index = 0
+    pending_zone: str | None = None
+    turn = 1
+
+    while path_index < len(path) -1 or pending_zone is not None:
+        if pending_zone is not None:
+            path_index += 1
+            print(f"{turn}ターン目: D1-{pending_zone}")
+            pending_zone = None
+        else:
+            current_zone = path[path_index]
+            next_zone = path[path_index + 1]
+            next_zone_type = graph.zones[next_zone].zone_type
+            cost = MOVE_COST[next_zone_type]
+
+            if cost == 1:
+                path_index += 1
+                print(f"{turn}ターン目: D1-{next_zone}")
+            else:
+                connection = graph.find_connection(current_zone, next_zone)
+                connection_name = f"{connection.zone1}-{connection.zone2}"
+                pending_zone = next_zone
+                print(f"{turn}ターン目: D1-{connection_name}(移動中)")
+        turn += 1
+
+
 if __name__ == "__main__":
-    nb_drones, graph = build_graph_from_map("01_linear_path.txt")
+    nb_drones, graph = build_graph_from_map("sample.txt")
  
-    path, total_cost = find_cheapest_path(graph, "start", "goal")
+    path, total_cost = find_cheapest_path(graph, "hub", "goal")
  
     print("一番安い道:", " → ".join(path))
     print("合計コスト:", total_cost, "ターン")
+    simulate_single_drone(graph, path)

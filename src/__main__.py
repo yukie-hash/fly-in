@@ -7,22 +7,43 @@ MOVE_COST = {
 }
 
 
+COLOR_CODES = {
+    "green": "\033[92m",
+    "yellow": "\033[93m",
+    "red": "\033[91m",
+    "blue": "\033[94m",
+    "gray": "\033[90m",
+}
+RESET_CODE = "\033[0m"
+ 
+
+def colorize(text: str, color_name: Optional[str]) -> None:
+    if color_name is None or color_name not in COLOR_CODES:
+        return text
+    return f"{COLOR_CODES[color_name]}{text}{RESET_CODE}"
+
+
 class Zone:
     def __init__(
             self,
             name:str,
             zone_type: str = "normal",
             max_drones: Optional[int] = 1,
+            color: Optional[str] = None
         ) -> None:
         self.name = name
         self.zone_type = zone_type
         self.max_drones = max_drones
+        self.color = color
         self.occupants: set[str] = set()  # 今ここにいるドローンのID
 
     def has_capacity(self) -> bool:
         if self.max_drones is None:
             return True
         return len(self.occupants) < self.max_drones
+
+    def display_name(self) -> str:
+        return colorize(self.name, self.color)
 
 
 class Connection:
@@ -107,13 +128,14 @@ def build_graph_from_map(filepath: str) -> tuple[int, Graph]:
             name = rest.split()[0]
             metadata = extract_metadata(rest)
             zone_type = metadata.get("zone", "normal")
+            color = metadata.get("color")
 
             if is_start or is_end:
                 max_drones = None
             else:
                 max_drones = int(metadata.get("max_dorones", "1"))
 
-            zone = Zone(name, zone_type, max_drones)
+            zone = Zone(name, zone_type, max_drones, color)
             graph.add_zone(zone, is_start=is_start, is_end=is_end)
         
         elif line.startswith("connection:"):
@@ -196,7 +218,7 @@ def simulate(graph: Graph, drones: list[Drone]) -> None:
             graph.zones[current_zone_name].occupants.discard(drone.id)
             next_zone.occupants.add(drone.id)
             drone.path_index += 1
-            turn_moves.append(f"{drone.id}-{next_zone_name}")
+            turn_moves.append(f"{drone.id}-{next_zone.display_name()}")
 
             if next_zone_name == graph.end_zone_name:
                 drone.delivered = True

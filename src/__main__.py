@@ -105,7 +105,7 @@ class Graph:
 
 def extract_metadata(rest: str) -> dict[str, str]:
     if "[" not in rest:
-        return "normal"
+        return {}
     
     metadata_str = rest.split("[")[1].split("]")[0]
     metadata = {}
@@ -205,7 +205,7 @@ class Drone:
         self.path_index = 0  #今pathの何番目にいるか
         self.delivered = False
         # 移動中の時にだけ使う情報
-        self.in_tansit_to: Optional[str] = None
+        self.in_transit_to: Optional[str] = None
         self.turns_remaining = 0
         self.transit_connection: Optional[Connection] = None
 
@@ -319,7 +319,7 @@ def simulate(graph: Graph, drones: list[Drone]) -> None:
 
 
 if __name__ == "__main__":
-    nb_drones, graph = build_graph_from_map("03_priority_puzzle.txt")
+    nb_drones, graph = build_graph_from_map("01_maze_nightmare.txt")
  
     path = find_cheapest_path(graph, graph.start_zone_name, graph.end_zone_name)
     print("全ドローンが通る道:", " → ".join(path))

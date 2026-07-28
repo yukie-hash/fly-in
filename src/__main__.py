@@ -160,9 +160,9 @@ def build_graph_from_map(filepath: str) -> tuple[int, Graph]:
 
 
 def find_cheapest_path(graph: Graph, start: str, end: str) -> list[str]:
-    infinity = float("inf")
+    infinity = (float("inf"), float("inf"))
     costs = {name: infinity for name in graph.zones}
-    costs[start] = 0
+    costs[start] = (0, 0)
     previous: dict[str, str] = {}
     unvisited = set(graph.zones.keys())
 
@@ -184,7 +184,18 @@ def find_cheapest_path(graph: Graph, start: str, end: str) -> list[str]:
                 continue
 
             move_cost = MOVE_COST[neighdor_zone.zone_type]
-            new_cost = costs[current] + move_cost
+
+            current_cost, current_priority = costs[current]
+
+            if neighdor_zone.zone_type == "priority":
+                priority = current_priority = -1
+            else:
+                priority = current_priority
+
+            new_cost = (
+                current_cost + move_cost,
+                priority
+            )
 
             if new_cost < costs[neighdor_name]:
                 costs[neighdor_name] = new_cost
@@ -291,35 +302,8 @@ def simulate(graph: Graph, drones: list[Drone]) -> None:
         turn += 1
 
 
-# def simulate_single_drone(graph: Graph, path: list[str]) -> None:
-#     path_index = 0
-#     pending_zone: str | None = None
-#     turn = 1
-
-#     while path_index < len(path) -1 or pending_zone is not None:
-#         if pending_zone is not None:
-#             path_index += 1
-#             print(f"{turn}ターン目: D1-{pending_zone}")
-#             pending_zone = None
-#         else:
-#             current_zone = path[path_index]
-#             next_zone = path[path_index + 1]
-#             next_zone_type = graph.zones[next_zone].zone_type
-#             cost = MOVE_COST[next_zone_type]
-
-#             if cost == 1:
-#                 path_index += 1
-#                 print(f"{turn}ターン目: D1-{next_zone}")
-#             else:
-#                 connection = graph.find_connection(current_zone, next_zone)
-#                 connection_name = f"{connection.zone1}-{connection.zone2}"
-#                 pending_zone = next_zone
-#                 print(f"{turn}ターン目: D1-{connection_name}(移動中)")
-#         turn += 1
-
-
 if __name__ == "__main__":
-    nb_drones, graph = build_graph_from_map("01_maze_nightmare.txt")
+    nb_drones, graph = build_graph_from_map("02_capacity_hell.txt")
  
     path = find_cheapest_path(graph, graph.start_zone_name, graph.end_zone_name)
     print("全ドローンが通る道:", " → ".join(path))

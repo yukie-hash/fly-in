@@ -47,15 +47,24 @@ class Zone:
 
 
 class Connection:
-    def __init__(self, zone1: str, zone2: str) -> None:
+    def __init__(
+            self,
+            zone1: str,
+            zone2: str,
+            max_link_capacity: int = 1
+        ) -> None:
         self.zone1 = zone1
         self.zone2 = zone2
+        self.max_link_capacity = max_link_capacity
+        self.travelers: set[str] = set()  # 今この橋を渡っているドローンのID
 
     def other_side(self, zone_name: str) -> str:
         if zone_name == self.zone1:
             return self.zone2
-        
         return self.zone1
+
+    def has_capacity(self) -> bool:
+        return len(self.travelers) < self.max_link_capacity
 
 class Graph:
     def __init__(self) -> None:
@@ -140,9 +149,11 @@ def build_graph_from_map(filepath: str) -> tuple[int, Graph]:
         
         elif line.startswith("connection:"):
             rest = line.split(":", 1)[1].strip()
-            rest = rest.split("[")[0].strip()
-            zone1, zone2 = rest.split("-")
-            graph.add_connection(Connection(zone1, zone2))
+            metadata = extract_metadata(rest)
+            main_part = rest.split("[")[0].strip()
+            zone1, zone2 = main_part.split("-")
+            max_link_capacity = int(metadata.get("max_link_capacity", "1"))
+            graph.add_connection(Connection(zone1, zone2, max_link_capacity))
 
     assert nb_drones is not None, "nb_dronesが見つかりませんでした"
     return nb_drones, graph
@@ -193,6 +204,10 @@ class Drone:
         self.path = path
         self.path_index = 0  #今pathの何番目にいるか
         self.delivered = False
+        # 移動中の時にだけ使う情報
+        self.in_tansit_to: Optional[str] = None
+        self.turns_remaining = 0
+        self.transit_connection: Optional[Connection] = None
 
 
 def simulate(graph: Graph, drones: list[Drone]) -> None:
@@ -203,25 +218,72 @@ def simulate(graph: Graph, drones: list[Drone]) -> None:
     while not all(drone.delivered for drone in drones):
         turn_moves = []
 
+        transient_travelers: list[tuple[Connection, str]] = []
+
         for drone in drones:
             if drone.delivered:
                 continue
 
+            # すでに移動中(restrictedゾーンに向かっている)場合
+            if drone.in_transit_to is not None:
+                drone.turns_remaining -= 1
+
+                # 到着
+                if drone.turns_remaining == 0:
+                    destination_name = drone.in_tansit_to
+                    destination_zone = graph.zones[destination_name]
+                    destination_zone.occupants.add(drone.id)
+                    drone.transit_connection.travelers.discard(drone.id)
+                    drone.path_index += 1
+                    drone.in_tansit_to = None
+                    drone.transit_connection = None
+                    turn_moves.append(f"{drone.id}-{destination_name}")
+                    if destination_name == graph.end_zone_name:
+                        drone.delivered = True
+
+                # まだ移動中
+                else:
+                    connection = drone.transit_connection
+                    connection_name = f"{connection.zone1}-{connection.zone2}"
+                    turn_moves.append(f"{drone.id}-{connection_name}")
+                continue
+
+            # 止まっている場合：次に進めるか判定する
             current_zone_name = drone.path[drone.path_index]
             next_zone_name = drone.path[drone.path_index + 1]
             next_zone = graph.zones[next_zone_name]
+            cost = MOVE_COST[next_zone.zone_type]
+            connection = graph.find_connection(current_zone_name, next_zone_name)
 
-            if not next_zone.has_capacity():
-                continue
+            if not connection.has_capacity():
+                continue  # 橋が満員なので待つ
 
-            #移動できる！　元の場所から抜けて、新しい場所に入る
-            graph.zones[current_zone_name].occupants.discard(drone.id)
-            next_zone.occupants.add(drone.id)
-            drone.path_index += 1
-            turn_moves.append(f"{drone.id}-{next_zone.display_name()}")
+            # restrictedゾーンへ2ターンかけて移動を開始する
+            if cost == 2:
+                connection.travelers.add(drone.id)
+                graph.zones[current_zone_name].occupants.discard(drone.id)
+                drone.in_tansit_to = next_zone_name
+                drone.turns_remaining = cost - 1
+                drone.transit_connection = connection
+                connection_name = f"{connection.zone1}-{connection.zone2}"
+                turn_moves.append(f"{drone.id}-{connection_name}")
 
-            if next_zone_name == graph.end_zone_name:
-                drone.delivered = True
+            # 1ターンで渡り切れる移動
+            else:
+                if not next_zone.has_capacity():
+                    continue
+                connection.travelers.add(drone.id)
+                transient_travelers.append((connection, drone.id))
+                graph.zones[current_zone_name].occupants.discard(drone.id)
+                next_zone.occupants.add(drone.id)
+                drone.path_index += 1
+                turn_moves.append(f"{drone.id}-{next_zone_name}")
+                if next_zone_name == graph.end_zone_name:
+                    drone.delivered = True
+
+            # このターンだけ橋を使った（1ターン移動の)ドローンを、橋から降ろす
+            for connection, drone.id in transient_travelers:
+                connection.travelers.discard(drone.id)
 
         if turn_moves:
             print(f"{turn}ターン目: " + " ".join(turn_moves))

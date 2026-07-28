@@ -303,7 +303,7 @@ def simulate(graph: Graph, drones: list[Drone]) -> None:
 
 
 if __name__ == "__main__":
-    nb_drones, graph = build_graph_from_map("02_capacity_hell.txt")
+    nb_drones, graph = build_graph_from_map("01_maze_nightmare.txt")
  
     path = find_cheapest_path(graph, graph.start_zone_name, graph.end_zone_name)
     print("全ドローンが通る道:", " → ".join(path))

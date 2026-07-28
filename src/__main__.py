@@ -258,6 +258,9 @@ def simulate(graph: Graph, drones: list[Drone]) -> None:
             if not connection.has_capacity():
                 continue  # 橋が満員なので待つ
 
+            if not next_zone.has_capacity():
+                continue
+
             # restrictedゾーンへ2ターンかけて移動を開始する
             if cost == 2:
                 connection.travelers.add(drone.id)
@@ -270,8 +273,6 @@ def simulate(graph: Graph, drones: list[Drone]) -> None:
 
             # 1ターンで渡り切れる移動
             else:
-                if not next_zone.has_capacity():
-                    continue
                 connection.travelers.add(drone.id)
                 transient_travelers.append((connection, drone.id))
                 graph.zones[current_zone_name].occupants.discard(drone.id)

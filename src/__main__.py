@@ -182,7 +182,7 @@ def build_graph_from_map(filepath: str) -> tuple[int, Graph]:
             if is_start or is_end:
                 max_drones = None
             else:
-                max_drones = int(metadata.get("max_dorones", "1"))
+                max_drones = int(metadata.get("max_drones", "1"))
 
             zone = Zone(name, x, y, zone_type, max_drones, color)
             graph.add_zone(zone, is_start=is_start, is_end=is_end)

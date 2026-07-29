@@ -1,5 +1,5 @@
 from typing import Optional
-from .visualize import render_map
+
 
 MOVE_COST = {
     "normal": 1,
@@ -341,7 +341,6 @@ def simulate(graph: Graph, drones: list[Drone]) -> None:
 
         if turn_moves:
             print(f"{turn}ターン目: " + " ".join(turn_moves))
-        #render_map(graph, turn)
         turn += 1
 
 

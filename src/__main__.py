@@ -1,5 +1,7 @@
 from typing import Optional
 
+from .visualize import TerminalRenderer
+
 
 MOVE_COST = {
     "normal": 1,
@@ -81,11 +83,13 @@ class Connection:
             self,
             zone1: str,
             zone2: str,
-            max_link_capacity: int = 1
+            max_link_capacity: int = 1,
+            has_explicit_capacity: bool = False,
         ) -> None:
         self.zone1 = zone1
         self.zone2 = zone2
         self.max_link_capacity = max_link_capacity
+        self.has_explicit_capacity = has_explicit_capacity
         self.travelers: set[str] = set()  # 今この橋を渡っているドローンのID
 
     def other_side(self, zone_name: str) -> str:
@@ -193,7 +197,14 @@ def build_graph_from_map(filepath: str) -> tuple[int, Graph]:
             main_part = rest.split("[")[0].strip()
             zone1, zone2 = main_part.split("-")
             max_link_capacity = int(metadata.get("max_link_capacity", "1"))
-            graph.add_connection(Connection(zone1, zone2, max_link_capacity))
+            graph.add_connection(
+                Connection(
+                    zone1,
+                    zone2,
+                    max_link_capacity,
+                    has_explicit_capacity="max_link_capacity" in metadata,
+                )
+            )
 
     assert nb_drones is not None, "nb_dronesが見つかりませんでした"
     return nb_drones, graph
@@ -262,6 +273,7 @@ class Drone:
 
 
 def simulate(graph: Graph, drones: list[Drone]) -> None:
+    renderer = TerminalRenderer(graph)
     for drone in drones:
         graph.zones[drone.path[0]].occupants.add(drone.id)
 
@@ -339,13 +351,14 @@ def simulate(graph: Graph, drones: list[Drone]) -> None:
         for connection, traveler_id in transient_travelers:
             connection.travelers.discard(traveler_id)
 
-        if turn_moves:
-            print(f"{turn}ターン目: " + " ".join(turn_moves))
+        # if turn_moves:
+        #     print(f"{turn}ターン目: " + " ".join(turn_moves))
+        renderer.render(turn, turn_moves)
         turn += 1
 
 
 if __name__ == "__main__":
-    nb_drones, graph = build_graph_from_map("01_the_impossible_dream.txt")
+    nb_drones, graph = build_graph_from_map("03_priority_puzzle.txt")
  
     path = find_cheapest_path(graph, graph.start_zone_name, graph.end_zone_name)
     print("全ドローンが通る道:", " → ".join(path))

@@ -1,4 +1,5 @@
 from typing import Optional
+from .visualize import render_map
 
 MOVE_COST = {
     "normal": 1,
@@ -27,11 +28,15 @@ class Zone:
     def __init__(
             self,
             name:str,
+            x: int,
+            y: int,
             zone_type: str = "normal",
             max_drones: Optional[int] = 1,
             color: Optional[str] = None
         ) -> None:
         self.name = name
+        self.x = x
+        self.y = y
         self.zone_type = zone_type
         self.max_drones = max_drones
         self.color = color
@@ -134,7 +139,10 @@ def build_graph_from_map(filepath: str) -> tuple[int, Graph]:
             is_start = line.startswith("start_hub:")
             is_end = line.startswith("end_hub:")
             rest = line.split(":", 1)[1].strip()
-            name = rest.split()[0]
+            fields = rest.split()
+            name = fields[0]
+            x = int(fields[1])
+            y = int(fields[2])
             metadata = extract_metadata(rest)
             zone_type = metadata.get("zone", "normal")
             color = metadata.get("color")
@@ -144,7 +152,7 @@ def build_graph_from_map(filepath: str) -> tuple[int, Graph]:
             else:
                 max_drones = int(metadata.get("max_dorones", "1"))
 
-            zone = Zone(name, zone_type, max_drones, color)
+            zone = Zone(name, x, y, zone_type, max_drones, color)
             graph.add_zone(zone, is_start=is_start, is_end=is_end)
         
         elif line.startswith("connection:"):
@@ -241,12 +249,12 @@ def simulate(graph: Graph, drones: list[Drone]) -> None:
 
                 # 到着
                 if drone.turns_remaining == 0:
-                    destination_name = drone.in_tansit_to
+                    destination_name = drone.in_transit_to
                     destination_zone = graph.zones[destination_name]
                     destination_zone.occupants.add(drone.id)
                     drone.transit_connection.travelers.discard(drone.id)
                     drone.path_index += 1
-                    drone.in_tansit_to = None
+                    drone.in_transit_to = None
                     drone.transit_connection = None
                     turn_moves.append(f"{drone.id}-{destination_name}")
                     if destination_name == graph.end_zone_name:
@@ -276,7 +284,7 @@ def simulate(graph: Graph, drones: list[Drone]) -> None:
             if cost == 2:
                 connection.travelers.add(drone.id)
                 graph.zones[current_zone_name].occupants.discard(drone.id)
-                drone.in_tansit_to = next_zone_name
+                drone.in_transit_to = next_zone_name
                 drone.turns_remaining = cost - 1
                 drone.transit_connection = connection
                 connection_name = f"{connection.zone1}-{connection.zone2}"
@@ -289,21 +297,22 @@ def simulate(graph: Graph, drones: list[Drone]) -> None:
                 graph.zones[current_zone_name].occupants.discard(drone.id)
                 next_zone.occupants.add(drone.id)
                 drone.path_index += 1
-                turn_moves.append(f"{drone.id}-{next_zone_name}")
+                turn_moves.append(f"{drone.id}-{next_zone.display_name()}")
                 if next_zone_name == graph.end_zone_name:
                     drone.delivered = True
 
-            # このターンだけ橋を使った（1ターン移動の)ドローンを、橋から降ろす
-            for connection, drone.id in transient_travelers:
-                connection.travelers.discard(drone.id)
+        # このターンだけ橋を使った（1ターン移動の)ドローンを、橋から降ろす
+        for connection, traveler_id in transient_travelers:
+            connection.travelers.discard(traveler_id)
 
         if turn_moves:
             print(f"{turn}ターン目: " + " ".join(turn_moves))
+        #render_map(graph, turn)
         turn += 1
 
 
 if __name__ == "__main__":
-    nb_drones, graph = build_graph_from_map("01_maze_nightmare.txt")
+    nb_drones, graph = build_graph_from_map("01_the_impossible_dream.txt")
  
     path = find_cheapest_path(graph, graph.start_zone_name, graph.end_zone_name)
     print("全ドローンが通る道:", " → ".join(path))

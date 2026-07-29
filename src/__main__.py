@@ -9,16 +9,41 @@ MOVE_COST = {
 
 
 COLOR_CODES = {
+    "black": "\033[30m",
     "green": "\033[92m",
     "yellow": "\033[93m",
     "red": "\033[91m",
     "blue": "\033[94m",
     "gray": "\033[90m",
+    "white": "\033[97m",
+    "cyan": "\033[96m",
+    "purple": "\033[95m",
+    "violet": "\033[38;5;141m",
+    "crimson": "\033[38;5;197m",
+    "lime": "\033[92m",
+    "orange": "\033[38;5;208m",
+    "brown": "\033[38;5;130m",
+    "maroon": "\033[38;5;52m",
+    "darkred": "\033[38;5;88m",
+    "gold": "\033[38;5;220m",
 }
 RESET_CODE = "\033[0m"
+RAINBOW_CODES = (
+    "\033[91m",  # red
+    "\033[93m",  # yellow
+    "\033[92m",  # green
+    "\033[96m",  # cyan
+    "\033[94m",  # blue
+    "\033[95m",  # purple
+)
  
 
-def colorize(text: str, color_name: Optional[str]) -> None:
+def colorize(text: str, color_name: Optional[str]) -> str:
+    if color_name == "rainbow":
+        return "".join(
+            f"{RAINBOW_CODES[index % len(RAINBOW_CODES)]}{character}"
+            for index, character in enumerate(text)
+        ) + RESET_CODE
     if color_name is None or color_name not in COLOR_CODES:
         return text
     return f"{COLOR_CODES[color_name]}{text}{RESET_CODE}"
@@ -70,6 +95,13 @@ class Connection:
 
     def has_capacity(self) -> bool:
         return len(self.travelers) < self.max_link_capacity
+
+    def display_name(self, graph: "Graph") -> str:
+        """両端の Zone に表示方法を委譲して、色付き接続名を返す。"""
+        return (
+            f"{graph.zones[self.zone1].display_name()}"
+            f"-{graph.zones[self.zone2].display_name()}"
+        )
 
 class Graph:
     def __init__(self) -> None:
@@ -256,14 +288,16 @@ def simulate(graph: Graph, drones: list[Drone]) -> None:
                     drone.path_index += 1
                     drone.in_transit_to = None
                     drone.transit_connection = None
-                    turn_moves.append(f"{drone.id}-{destination_name}")
+                    turn_moves.append(
+                        f"{drone.id}-{destination_zone.display_name()}"
+                    )
                     if destination_name == graph.end_zone_name:
                         drone.delivered = True
 
                 # まだ移動中
                 else:
                     connection = drone.transit_connection
-                    connection_name = f"{connection.zone1}-{connection.zone2}"
+                    connection_name = connection.display_name(graph)
                     turn_moves.append(f"{drone.id}-{connection_name}")
                 continue
 
@@ -287,7 +321,7 @@ def simulate(graph: Graph, drones: list[Drone]) -> None:
                 drone.in_transit_to = next_zone_name
                 drone.turns_remaining = cost - 1
                 drone.transit_connection = connection
-                connection_name = f"{connection.zone1}-{connection.zone2}"
+                connection_name = connection.display_name(graph)
                 turn_moves.append(f"{drone.id}-{connection_name}")
 
             # 1ターンで渡り切れる移動

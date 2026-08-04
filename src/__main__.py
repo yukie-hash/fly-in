@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+import heapq
 from typing import Optional
 
 from .visualize import TerminalRenderer
@@ -129,13 +132,13 @@ class Graph:
     def add_connection(self, connection: Connection) -> None:
         self.connections.append(connection)
 
-    def get_neighdors(self, zone_name: str) -> list[str]:
-        neighdors = []
+    def get_neighbors(self, zone_name: str) -> list[str]:
+        neighbors = []
 
         for connection in self.connections:
             if connection.zone1 == zone_name or connection.zone2 == zone_name:
-                neighdors.append(connection.other_side(zone_name))
-        return neighdors
+                neighbors.append(connection.other_side(zone_name))
+        return neighbors
     
     def find_connection(self, zone_a :str, zone_b: str) -> Connection:
         for connection in self.connections:
@@ -158,7 +161,7 @@ def extract_metadata(rest: str) -> dict[str, str]:
 
 def build_graph_from_map(filepath: str) -> tuple[int, Graph]:
     graph = Graph()
-    nb_drones = None
+    nb_drones: Optional[int] = None
 
     with open(filepath, encoding="utf-8") as file:
         lines = file.readlines()
@@ -194,9 +197,12 @@ def build_graph_from_map(filepath: str) -> tuple[int, Graph]:
         elif line.startswith("connection:"):
             rest = line.split(":", 1)[1].strip()
             metadata = extract_metadata(rest)
+
             main_part = rest.split("[")[0].strip()
             zone1, zone2 = main_part.split("-")
+
             max_link_capacity = int(metadata.get("max_link_capacity", "1"))
+
             graph.add_connection(
                 Connection(
                     zone1,
@@ -206,8 +212,142 @@ def build_graph_from_map(filepath: str) -> tuple[int, Graph]:
                 )
             )
 
-    assert nb_drones is not None, "nb_dronesが見つかりませんでした"
+    if nb_drones is None:
+        raise ValueError(
+            "Not found nb_drones in the map"
+        )
+
+    if graph.start_zone_name is None:
+        raise ValueError(
+            "Not found start_hub in the map"
+        )
+
+    if graph.end_zone_name is None:
+            raise ValueError(
+                "Not found end_hub in the map"
+            )
+
     return nb_drones, graph
+
+
+class ReservationTable:
+    def __init__(self) -> None:
+        #  キー：(zone_name, turn)
+        #  値：そのZoneを予約しているドローンIDの集合
+        self.zone_reservations: dict[
+            tuple[str, int],
+            set[str]
+        ] = {}
+
+        # キー: (connection_name, turn)
+        # 値: そのConnectionを予約しているドローンIDの集合
+        self.connection_reservations: dict[
+            tuple[str, int],
+            set[str]
+        ] = {}
+
+    def reserve_zone(
+        self,
+        zone_name: str,
+        turn: int,
+        drone_id: str
+    ) -> None:
+        """指定ターンのZoneを予約する
+
+        Args:
+            zone_name (str): _description_
+            turn (int): _description_
+            drone_id (str): _description_
+        """
+        key = (zone_name, turn)
+
+        if key not in self.zone_reservations:
+            self.zone_reservations[key] = set()
+
+        self.zone_reservations[key].add(drone_id)
+
+    def reserve_connection(
+            self,
+            connection_name: str,
+            turn: int,
+            drone_id: str
+    ) -> None:
+        """指定ターンのConnectionを予約する
+
+        Args:
+            connection_name (str): _description_
+            turn (int): _description_
+            drone_id (str): _description_
+        """
+        key = (connection_name, turn)
+
+        if key not in self.connection_reservations:
+            self.connection_reservations[key] = set()
+
+        self.connection_reservations[key].add(drone_id)
+
+    def zone_is_available(
+        self,
+        zone: Zone,
+        turn: int,
+    ) -> bool:
+        """指定ターンのZoneに空きがあるか確認する
+
+        Args:
+            zone (Zone): _description_
+            turn (int): _description_
+
+        Returns:
+            bool: _description_
+        """
+        if zone.max_drones is None:
+            return True
+
+        key = (zone.name, turn)
+
+        reserved_drones = self.zone_reservations.get(
+            key,
+            set()
+        )
+        return len(reserved_drones) < zone.max_drones
+
+    def connection_is_available(
+        self,
+        connection: Connection,
+        turn: int
+    ) -> bool:
+        """指定ターンのConnectionに空きがあるか確認する
+
+        Args:
+            connection (Connection): _description_
+            turn (int): _description_
+
+        Returns:
+            bool: _description_
+        """
+        connection_name = self._connection_name(connection)
+        key = (connection_name, turn)
+
+        reserved_drones = self.connection_reservations.get(
+            key,
+            set()
+        )
+        return (
+            len(reserved_drones)
+            < connection.max_link_capacity
+        )
+
+    def _connection_name(
+        self,
+        connection: Connection
+    ) -> str:
+        """Connectionを予約表用の文字列に変換する。"""
+        names = sorted([
+            connection.zone1,
+            connection.zone2
+        ])
+
+        return f"{names[0]}-{names[1]}"
 
 
 def find_cheapest_path(graph: Graph, start: str, end: str) -> list[str]:
@@ -228,7 +368,7 @@ def find_cheapest_path(graph: Graph, start: str, end: str) -> list[str]:
 
         unvisited.remove(current)
 
-        for neighdor_name in graph.get_neighdors(current):
+        for neighdor_name in graph.get_neighbors(current):
             neighdor_zone = graph.zones[neighdor_name]
 
             if neighdor_zone.zone_type == "blocked":
@@ -358,11 +498,22 @@ def simulate(graph: Graph, drones: list[Drone]) -> None:
 
 
 if __name__ == "__main__":
-    nb_drones, graph = build_graph_from_map("03_priority_puzzle.txt")
+    # nb_drones, graph = build_graph_from_map("03_priority_puzzle.txt")
  
-    path = find_cheapest_path(graph, graph.start_zone_name, graph.end_zone_name)
-    print("全ドローンが通る道:", " → ".join(path))
-    print()
+    # path = find_cheapest_path(graph, graph.start_zone_name, graph.end_zone_name)
+    # print("全ドローンが通る道:", " → ".join(path))
+    # print()
 
-    drones = [Drone(f"D{i}", path) for i in range(1, nb_drones + 1)]    
-    simulate(graph, drones)
+    # drones = [Drone(f"D{i}", path) for i in range(1, nb_drones + 1)]    
+    # simulate(graph, drones)
+
+    reservations = ReservationTable()
+
+    reservations.reserve_zone(
+        zone_name="A",
+        turn=1,
+        drone_id="D1",
+    )
+
+    print(reservations.zone_reservations)
+

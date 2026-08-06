@@ -1,4 +1,5 @@
 from __future__ import annotations
+import sys
 
 import heapq
 from typing import Optional
@@ -498,22 +499,27 @@ def simulate(graph: Graph, drones: list[Drone]) -> None:
 
 
 if __name__ == "__main__":
-    # nb_drones, graph = build_graph_from_map("03_priority_puzzle.txt")
+    if len(sys.argv) != 2:
+        print(f"Usage: python -m {__package__} <map_file>")
+        sys.exit(1)
+
+    map_file = sys.argv[1]
+    nb_drones, graph = build_graph_from_map(map_file)
  
-    # path = find_cheapest_path(graph, graph.start_zone_name, graph.end_zone_name)
-    # print("全ドローンが通る道:", " → ".join(path))
-    # print()
+    path = find_cheapest_path(graph, graph.start_zone_name, graph.end_zone_name)
+    print("全ドローンが通る道:", " → ".join(path))
+    print()
 
-    # drones = [Drone(f"D{i}", path) for i in range(1, nb_drones + 1)]    
-    # simulate(graph, drones)
+    drones = [Drone(f"D{i}", path) for i in range(1, nb_drones + 1)]    
+    simulate(graph, drones)
 
-    reservations = ReservationTable()
+    # reservations = ReservationTable()
 
-    reservations.reserve_zone(
-        zone_name="A",
-        turn=1,
-        drone_id="D1",
-    )
+    # reservations.reserve_zone(
+    #     zone_name="A",
+    #     turn=1,
+    #     drone_id="D1",
+    # )
 
-    print(reservations.zone_reservations)
+    # print(reservations.zone_reservations)
 

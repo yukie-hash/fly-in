@@ -373,8 +373,9 @@ class PathFinder:
 
         entry_id = 0
 
+        # (到着ターン, priority評価, 同点比較用ID(TypeError対策), Zone名)
         heap: list[tuple[int, int, str]] = [
-            (start_turn, entry_id, start)
+            (start_turn, 0, entry_id, start)
         ]
 
         previous: dict[
@@ -385,7 +386,7 @@ class PathFinder:
         visited: set[tuple[str, int]] = set()
 
         while heap:
-            turn, _, zone_name = heapq.heappop(heap)
+            turn, priority_score, _, zone_name = heapq.heappop(heap)
             current_state = (zone_name, turn)
 
             if current_state in visited: #  ???
@@ -416,9 +417,11 @@ class PathFinder:
                 entry_id += 1
                 heapq.heappush(
                     heap,
-                        (wait_turn,
-                        entry_id,
-                        zone_name
+                        (
+                            wait_turn,
+                            priority_score,
+                            entry_id,
+                            zone_name
                     ),
                 )
 
@@ -436,6 +439,11 @@ class PathFinder:
                     neighbor_zone.zone_type
                 ]
                 arrival_turn = turn + move_cost
+
+                if neighbor_zone.zone_type == "priority":
+                    next_priority_score = priority_score - 1
+                else:
+                    next_priority_score = priority_score
 
                 #  ??? 到着時のターン数がmax_horizenよりデカかったら？
                 if (
@@ -474,6 +482,7 @@ class PathFinder:
                     heap,
                         (
                             arrival_turn,
+                            next_priority_score,
                             entry_id,
                             neighbor_name
                         ),

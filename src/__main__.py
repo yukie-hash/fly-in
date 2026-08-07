@@ -350,6 +350,185 @@ class ReservationTable:
 
         return f"{names[0]}-{names[1]}"
 
+class PathFinder:
+    """予約表を考慮して、1台分の最短到着経路を探す
+    """
+    def __init__(
+        self,
+        graph: Graph,
+        reservations: ReservationTable,
+        max_horizon: int = 200
+    ) -> None:
+        self.graph = graph
+        self.reservations = reservations
+        self.max_horizen = max_horizon
+
+    def find_path(
+        self,
+        start: str,
+        end: str,
+        drone_id: str,
+        start_turn: int = 0
+    ) -> Optional[list[tuple[int, str]]]:
+
+        entry_id = 0
+
+        heap: list[tuple[int, int, str]] = [
+            (start_turn, entry_id, start)
+        ]
+
+        previous: dict[
+            tuple[str, int],
+            tuple[str, int],
+        ] = {}
+
+        visited: set[tuple[str, int]] = set()
+
+        while heap:
+            turn, _, zone_name = heapq.heappop(heap)
+            current_state = (zone_name, turn)
+
+            if current_state in visited: #  ???
+                continue
+
+            visited.add(current_state)
+
+            if zone_name == end:
+                return self._reconstruct_path(
+                    previous,
+                    current_state,
+                )
+
+            if turn >= start_turn + self.max_horizen:
+                continue
+
+            current_zone = self.graph.zones[zone_name]
+
+            wait_turn = turn + 1  #  ???
+            wait_state = (zone_name, wait_turn)
+
+            if self.reservations.zone_is_available(
+                    current_zone,
+                    wait_turn
+            ):
+                previous[wait_state] = current_state
+
+                entry_id += 1
+                heapq.heappush(
+                    heap,
+                        (wait_turn,
+                        entry_id,
+                        zone_name
+                    ),
+                )
+
+            for neighbor_name in self.graph.get_neighbors(
+                zone_name
+            ):
+                neighbor_zone = self.graph.zones[
+                    neighbor_name
+                ]
+
+                if neighbor_zone.zone_type == "blocked":
+                    continue
+
+                move_cost = MOVE_COST[
+                    neighbor_zone.zone_type
+                ]
+                arrival_turn = turn + move_cost
+
+                #  ??? 到着時のターン数がmax_horizenよりデカかったら？
+                if (
+                    arrival_turn
+                    > start_turn + self.max_horizen
+                ):
+                    continue
+
+                connection = self.graph.find_connection(
+                    zone_name,
+                    neighbor_name
+                )
+
+                if not self._connection_is_available_during_move(
+                    connection,
+                    turn,
+                    arrival_turn
+                ):
+                    continue
+
+                if not self.reservations.zone_is_available(
+                    neighbor_zone,
+                    arrival_turn
+                ):
+                    continue
+
+                next_state = (
+                    neighbor_name,
+                    arrival_turn
+                )
+
+                previous[next_state] = current_state
+
+                entry_id += 1
+                heapq.heappush(
+                    heap,
+                        (
+                            arrival_turn,
+                            entry_id,
+                            neighbor_name
+                        ),
+                )
+
+        return None
+
+    def _connection_is_available_during_move(
+        self,
+        connection: Connection,
+        departure_turn: int,
+        arrival_turn: int
+    ) -> bool:
+        for turn in range(
+            departure_turn + 1,
+            arrival_turn + 1
+        ):
+            if not self.reservations.connection_is_available(
+                connection,
+                turn
+            ):
+                return False
+
+        return True
+
+    def _reconstruct_path(
+        self,
+        previous: dict[
+            tuple[str, int],
+            tuple[str, int]
+        ],
+        goal_state: tuple[str, int]
+    ) -> list[tuple[int, str]]:
+
+        state_path = [goal_state]
+
+        while state_path[-1] in previous:
+            state_path.append(
+                previous[state_path[-1]]
+            )
+
+        state_path.reverse()
+
+        path: list[tuple[int, str]] = []
+
+        for zone_name, turn in state_path:
+            path.append((turn, zone_name))
+
+        return path
+
+
+
+
+
+
 
 def find_cheapest_path(graph: Graph, start: str, end: str) -> list[str]:
     infinity = (float("inf"), float("inf"))
@@ -506,13 +685,15 @@ if __name__ == "__main__":
     map_file = sys.argv[1]
     nb_drones, graph = build_graph_from_map(map_file)
  
-    path = find_cheapest_path(graph, graph.start_zone_name, graph.end_zone_name)
-    print("全ドローンが通る道:", " → ".join(path))
-    print()
+    # path = find_cheapest_path(graph, graph.start_zone_name, graph.end_zone_name)
+    # print("全ドローンが通る道:", " → ".join(path))
+    # print()
 
-    drones = [Drone(f"D{i}", path) for i in range(1, nb_drones + 1)]    
-    simulate(graph, drones)
+    # drones = [Drone(f"D{i}", path) for i in range(1, nb_drones + 1)]    
+    # simulate(graph, drones)
 
+
+    #  ReservationTableのテスト
     # reservations = ReservationTable()
 
     # reservations.reserve_zone(
@@ -522,4 +703,21 @@ if __name__ == "__main__":
     # )
 
     # print(reservations.zone_reservations)
+
+
+    #  PathFinderのテスト
+    reservations = ReservationTable()
+
+    pathfinder = PathFinder(
+        graph,
+        reservations,
+    )
+
+    path = pathfinder.find_path(
+        start=graph.start_zone_name,
+        end=graph.end_zone_name,
+        drone_id="D1",
+    )
+
+    print(path)
 

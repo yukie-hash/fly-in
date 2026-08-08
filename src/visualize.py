@@ -187,6 +187,3 @@ class TerminalRenderer:
             print(line)
 
 
-def render_map(graph: Graph, turn: int, moves: list[str]) -> None:
-    """既存の呼び出し口。描画の責務は TerminalRenderer に委譲する。"""
-    TerminalRenderer(graph).render(turn, moves)

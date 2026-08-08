@@ -534,11 +534,6 @@ class PathFinder:
         return path
 
 
-
-
-
-
-
 def find_cheapest_path(graph: Graph, start: str, end: str) -> list[str]:
     infinity = (float("inf"), float("inf"))
     costs = {name: infinity for name in graph.zones}
@@ -694,12 +689,12 @@ if __name__ == "__main__":
     map_file = sys.argv[1]
     nb_drones, graph = build_graph_from_map(map_file)
  
-    # path = find_cheapest_path(graph, graph.start_zone_name, graph.end_zone_name)
-    # print("全ドローンが通る道:", " → ".join(path))
-    # print()
+    path = find_cheapest_path(graph, graph.start_zone_name, graph.end_zone_name)
+    print("全ドローンが通る道:", " → ".join(path))
+    print()
 
-    # drones = [Drone(f"D{i}", path) for i in range(1, nb_drones + 1)]    
-    # simulate(graph, drones)
+    drones = [Drone(f"D{i}", path) for i in range(1, nb_drones + 1)]    
+    simulate(graph, drones)
 
 
     #  ReservationTableのテスト
@@ -715,18 +710,18 @@ if __name__ == "__main__":
 
 
     #  PathFinderのテスト
-    reservations = ReservationTable()
+    # reservations = ReservationTable()
 
-    pathfinder = PathFinder(
-        graph,
-        reservations,
-    )
+    # pathfinder = PathFinder(
+    #     graph,
+    #     reservations,
+    # )
 
-    path = pathfinder.find_path(
-        start=graph.start_zone_name,
-        end=graph.end_zone_name,
-        drone_id="D1",
-    )
+    # path = pathfinder.find_path(
+    #     start=graph.start_zone_name,
+    #     end=graph.end_zone_name,
+    #     drone_id="D1",
+    # )
 
-    print(path)
+    # print(path)
 

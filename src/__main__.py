@@ -633,7 +633,11 @@ def find_cheapest_path(graph: Graph, start: str, end: str) -> list[str]:
 
 
 class Drone:
-    def __init__(self, drone_id: str, path: list[str]) -> None:
+    def __init__(
+            self,
+            drone_id: str,
+            path: list[tuple[int, str]]
+        ) -> None:
         self.id = drone_id
         self.path = path
         self.path_index = 0  #今pathの何番目にいるか
@@ -647,87 +651,88 @@ class Drone:
 def simulate(graph: Graph, drones: list[Drone]) -> None:
     renderer = TerminalRenderer(graph)
     for drone in drones:
-        graph.zones[drone.path[0]].occupants.add(drone.id)
+        _, start_zone_name = drone.path[0]
+        graph.zones[start_zone_name].occupants.add(drone.id)
 
-    turn = 1
+    turn = 0
     while not all(drone.delivered for drone in drones):
         turn_moves = []
-
-        transient_travelers: list[tuple[Connection, str]] = []
 
         for drone in drones:
             if drone.delivered:
                 continue
 
-            # すでに移動中(restrictedゾーンに向かっている)場合
-            if drone.in_transit_to is not None:
-                drone.turns_remaining -= 1
+            if drone.path_index >= len(drone.path) - 1:
+                drone.delivered = True
+                continue
 
-                # 到着
-                if drone.turns_remaining == 0:
-                    destination_name = drone.in_transit_to
-                    destination_zone = graph.zones[destination_name]
-                    destination_zone.occupants.add(drone.id)
-                    drone.transit_connection.travelers.discard(drone.id)
+            depature_turn, current_zone_name = (
+                drone.path[drone.path_index]
+            )
+
+            arrival_turn, next_zone_name = (
+                drone.path[drone.path_index + 1]
+            )
+
+            # PathFinderが決めた出発時刻になるまでは動かない。
+            if turn <= depature_turn:
+                continue
+
+            #  待機
+            if current_zone_name == next_zone_name:
+                if turn == arrival_turn:  #  ???
                     drone.path_index += 1
-                    drone.in_transit_to = None
-                    drone.transit_connection = None
-                    turn_moves.append(
-                        f"{drone.id}-{destination_zone.display_name()}"
+                continue
+
+            connection = graph.find_connection(
+                current_zone_name,
+                next_zone_name
+            )
+
+            #  到着に2ターン掛かる(restrictゾーン)
+            if turn < arrival_turn:
+                #  初めてConnectionへ入るとき
+                if drone.transit_connection is None:
+                    # Aから出す
+                    graph.zones[
+                        current_zone_name
+                    ].occupants.discard(drone.id)
+                    # Connection上に置く
+                    connection.travelers.add(drone.id)
+                    # droneがどのConnectionを移動中か記録
+                    drone.transit_connection = connection
+
+                turn_moves.append(
+                    f"{drone.id}-{connection.display_name(graph)}"
+                )
+                continue
+
+            if turn == arrival_turn:
+                graph.zones[
+                    current_zone_name
+                ].occupants.discard(drone.id)
+
+                if drone.transit_connection is not None:
+                    drone.transit_connection.travelers.discard(
+                        drone.id
                     )
-                    if destination_name == graph.end_zone_name:
-                        drone.delivered = True
+                    drone.transit_connection = None
 
-                # まだ移動中
-                else:
-                    connection = drone.transit_connection
-                    connection_name = connection.display_name(graph)
-                    turn_moves.append(f"{drone.id}-{connection_name}")
-                continue
+                destination_zone = graph.zones[next_zone_name]
+                destination_zone.occupants.add(drone.id)
 
-            # 止まっている場合：次に進めるか判定する
-            current_zone_name = drone.path[drone.path_index]
-            next_zone_name = drone.path[drone.path_index + 1]
-            next_zone = graph.zones[next_zone_name]
-            cost = MOVE_COST[next_zone.zone_type]
-            connection = graph.find_connection(current_zone_name, next_zone_name)
-
-            if not connection.has_capacity():
-                continue  # 橋が満員なので待つ
-
-            if not next_zone.has_capacity():
-                continue
-
-            # restrictedゾーンへ2ターンかけて移動を開始する
-            if cost == 2:
-                connection.travelers.add(drone.id)
-                graph.zones[current_zone_name].occupants.discard(drone.id)
-                drone.in_transit_to = next_zone_name
-                drone.turns_remaining = cost - 1
-                drone.transit_connection = connection
-                connection_name = connection.display_name(graph)
-                turn_moves.append(f"{drone.id}-{connection_name}")
-
-            # 1ターンで渡り切れる移動
-            else:
-                connection.travelers.add(drone.id)
-                transient_travelers.append((connection, drone.id))
-                graph.zones[current_zone_name].occupants.discard(drone.id)
-                next_zone.occupants.add(drone.id)
                 drone.path_index += 1
-                turn_moves.append(f"{drone.id}-{next_zone.display_name()}")
+
+                turn_moves.append(
+                    f"{drone.id}-{destination_zone.display_name()}"
+                )
+
                 if next_zone_name == graph.end_zone_name:
                     drone.delivered = True
-
-        # このターンだけ橋を使った（1ターン移動の)ドローンを、橋から降ろす
-        for connection, traveler_id in transient_travelers:
-            connection.travelers.discard(traveler_id)
-
-        # if turn_moves:
-        #     print(f"{turn}ターン目: " + " ".join(turn_moves))
         renderer.render(turn, turn_moves)
+        
         turn += 1
-
+ 
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
@@ -773,9 +778,22 @@ if __name__ == "__main__":
 
         paths[drone_id] = path
 
-        print(
-            f"{drone_id}: {path}"
+    drones = []
+
+    for drone_id, path in paths.items():
+        drones.append(
+            Drone(
+                drone_id,
+                path
+            )
         )
+
+    print("\033[?7l", end="")
+
+    try:
+        simulate(graph, drones)
+    finally:
+        print("\033[?7h", end="")
 
             
 

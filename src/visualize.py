@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import shutil
+
 if TYPE_CHECKING:
     from .__main__ import Connection, Graph, Zone
 
@@ -111,9 +113,9 @@ class TerminalRenderer:
                     self.grid[bend_row][bend_col] = corner_char
 
         if connection.has_explicit_capacity:
-            label_row = round((start_row + end_row) / 2) - 3
+            label_row = round((start_row + end_row) / 2) - 1
             label_col = round((start_col + end_col) / 2) - 3
-            self._put(label_row, label_col, f"(cap:{connection.max_link_capacity})")
+            self._put(label_row, label_col, f"cap:{connection.max_link_capacity}")
 
     @staticmethod
     def _corner(moves_right: bool, moves_down: bool, double: bool) -> str:
@@ -173,17 +175,99 @@ class TerminalRenderer:
         for zone in self.zones:
             self._draw_zone(zone)
 
-    def _print_frame(self, turn: int, moves: list[str]) -> None:
+    #  改行しないで描画
+    # def _print_frame(self, turn: int, moves: list[str]) -> None:
+    #     print(f"\n=== {turn}ターン目 ===")
+    #     if moves:
+    #         print("移動:", " ".join(moves))
+
+    #     for row_index, row_chars in enumerate(self.grid):
+    #         line = "".join(row_chars).rstrip()
+    #         row_overlays = [item for item in self.overlays if item[0] == row_index]
+    #         for _, col, text, color in sorted(row_overlays, reverse=True):
+    #             if color:
+    #                 line = line[:col] + color + text + RESET + line[col + len(text):]
+    #         print(line)
+
+    def _print_frame(
+        self,
+        turn: int,
+        moves: list[str],
+    ) -> None:
+        terminal_width = shutil.get_terminal_size(
+            fallback=(80, 24)
+        ).columns
+
+        # 右端ぴったりだと折り返す端末があるため1文字空ける
+        section_width = max(1, terminal_width - 1)
+
         print(f"\n=== {turn}ターン目 ===")
+
         if moves:
             print("移動:", " ".join(moves))
 
-        for row_index, row_chars in enumerate(self.grid):
-            line = "".join(row_chars).rstrip()
-            row_overlays = [item for item in self.overlays if item[0] == row_index]
-            for _, col, text, color in sorted(row_overlays, reverse=True):
-                if color:
-                    line = line[:col] + color + text + RESET + line[col + len(text):]
-            print(line)
+        section_number = 1
+        section_count = (
+            self.width + section_width - 1
+        ) // section_width
 
+        for left in range(0, self.width, section_width):
+            right = min(
+                left + section_width,
+                self.width,
+            )
+
+            if section_count > 1:
+                print(
+                    f"\n--- 地図 {section_number}/{section_count} "
+                    f"（横位置 {left}〜{right - 1}）---"
+                )
+
+            for row_index, row_chars in enumerate(self.grid):
+                # 現在の横範囲だけ切り出す
+                line = "".join(
+                    row_chars[left:right]
+                ).rstrip()
+
+                # この範囲に入っている色付きゾーンを探す
+                row_overlays = [
+                    item
+                    for item in self.overlays
+                    if item[0] == row_index
+                ]
+
+                for _, col, text, color in sorted(
+                    row_overlays,
+                    reverse=True,
+                ):
+                    overlay_start = max(col, left)
+                    overlay_end = min(
+                        col + len(text),
+                        right,
+                    )
+
+                    if overlay_start >= overlay_end:
+                        continue
+
+                    text_start = overlay_start - col
+                    text_end = overlay_end - col
+                    clipped_text = text[text_start:text_end]
+
+                    local_col = overlay_start - left
+
+                    if color:
+                        line = (
+                            line[:local_col]
+                            + color
+                            + clipped_text
+                            + RESET
+                            + line[
+                                local_col
+                                + len(clipped_text):
+                            ]
+                        )
+
+                print(line)
+
+            section_number += 1
 

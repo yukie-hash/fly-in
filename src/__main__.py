@@ -326,7 +326,7 @@ class ReservationTable:
         Returns:
             bool: _description_
         """
-        connection_name = self._connection_name(connection)
+        connection_name = self._make_connection_key(connection)
         key = (connection_name, turn)
 
         reserved_drones = self.connection_reservations.get(
@@ -338,7 +338,7 @@ class ReservationTable:
             < connection.max_link_capacity
         )
 
-    def _connection_name(
+    def _make_connection_key(
         self,
         connection: Connection
     ) -> str:
@@ -349,6 +349,54 @@ class ReservationTable:
         ])
 
         return f"{names[0]}-{names[1]}"
+
+    def reserve_path(
+        self,
+        graph: Graph,
+        path: list[tuple[int, int]],
+        drone_id: str
+    ) -> None:
+        """決定した経路を予約する
+
+        Args:
+            graph (Graph): _description_
+            path (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
+        for turn, zone_name in path:
+            self.reserve_zone(
+                zone_name,
+                turn,
+                drone_id
+            )
+
+        for i in range(len(path) -1):
+            departure_turn, current_zone = path[i]
+            arrival_turn, next_zone = path[i + 1]
+
+            if current_zone == next_zone:  #  待機だったら
+                continue
+
+            connection = graph.find_connection(
+                current_zone,
+                next_zone
+            )
+
+            connection_key = self._make_connection_key(
+                connection
+            )
+
+            for turn in range(
+                departure_turn + 1,
+                arrival_turn + 1
+            ):
+                self.reserve_connection(
+                    connection_key,
+                    turn,
+                    drone_id
+                )
 
 class PathFinder:
     """予約表を考慮して、1台分の最短到着経路を探す
@@ -688,13 +736,56 @@ if __name__ == "__main__":
 
     map_file = sys.argv[1]
     nb_drones, graph = build_graph_from_map(map_file)
- 
-    path = find_cheapest_path(graph, graph.start_zone_name, graph.end_zone_name)
-    print("全ドローンが通る道:", " → ".join(path))
-    print()
 
-    drones = [Drone(f"D{i}", path) for i in range(1, nb_drones + 1)]    
-    simulate(graph, drones)
+    reservations = ReservationTable()
+
+    pathfinder = PathFinder(
+        graph,
+        reservations
+    )
+
+    paths: dict[
+        str,
+        list[tuple[int, str]]
+        ] = {}
+
+    for i in range(1, nb_drones + 1):
+        drone_id = f"D{i}"
+
+        path = pathfinder.find_path(
+            graph.start_zone_name,
+            graph.end_zone_name,
+            drone_id
+        )
+
+        if path is None:
+            print(
+                f"{drone_id}:"
+                "経路が見つかりませんでした"
+            )
+            continue
+
+        reservations.reserve_path(
+            graph,
+            path,
+            drone_id
+        )
+
+        paths[drone_id] = path
+
+        print(
+            f"{drone_id}: {path}"
+        )
+
+            
+
+    # 全台同経路使用
+    # path = find_cheapest_path(graph, graph.start_zone_name, graph.end_zone_name)
+    # print("全ドローンが通る道:", " → ".join(path))
+    # print()
+
+    # drones = [Drone(f"D{i}", path) for i in range(1, nb_drones + 1)]    
+    # simulate(graph, drones)
 
 
     #  ReservationTableのテスト

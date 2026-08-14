@@ -398,6 +398,25 @@ class ReservationTable:
                     drone_id
                 )
 
+    
+    def _connection_is_available_during_move(
+        self,
+        connection: Connection,
+        departure_turn: int,
+        arrival_turn: int
+    ) -> bool:
+        for turn in range(
+            departure_turn + 1,
+            arrival_turn + 1
+        ):
+            if not self.connection_is_available(
+                connection,
+                turn
+            ):
+                return False
+
+        return True
+
 class PathFinder:
     """予約表を考慮して、1台分の最短到着経路を探す
     """
@@ -505,7 +524,7 @@ class PathFinder:
                     neighbor_name
                 )
 
-                if not self._connection_is_available_during_move(
+                if not self.reservations._connection_is_available_during_move(
                     connection,
                     turn,
                     arrival_turn
@@ -538,23 +557,6 @@ class PathFinder:
 
         return None
 
-    def _connection_is_available_during_move(
-        self,
-        connection: Connection,
-        departure_turn: int,
-        arrival_turn: int
-    ) -> bool:
-        for turn in range(
-            departure_turn + 1,
-            arrival_turn + 1
-        ):
-            if not self.reservations.connection_is_available(
-                connection,
-                turn
-            ):
-                return False
-
-        return True
 
     def _reconstruct_path(
         self,

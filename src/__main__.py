@@ -13,6 +13,12 @@ MOVE_COST = {
     "restricted": 2,
 }
 
+# MAX_SEARCH_TURNS = (
+#     len(graph.zones)
+#     * nb_drones
+#     * max(MOVE_COST.values())
+# )
+
 
 COLOR_CODES = {
     "black": "\033[30m",
@@ -353,7 +359,7 @@ class ReservationTable:
     def reserve_path(
         self,
         graph: Graph,
-        path: list[tuple[int, int]],
+        path: list[tuple[int, str]],
         drone_id: str
     ) -> None:
         """決定した経路を予約する
@@ -399,7 +405,7 @@ class ReservationTable:
                 )
 
     
-    def _connection_is_available_during_move(
+    def connection_is_available_during_move(
         self,
         connection: Connection,
         departure_turn: int,
@@ -428,7 +434,7 @@ class PathFinder:
     ) -> None:
         self.graph = graph
         self.reservations = reservations
-        self.max_horizen = max_horizon
+        self.max_horizon = max_horizon
 
     def find_path(
         self,
@@ -441,7 +447,7 @@ class PathFinder:
         entry_id = 0
 
         # (到着ターン, priority評価, 同点比較用ID(TypeError対策), Zone名)
-        heap: list[tuple[int, int, str]] = [
+        heap: list[tuple[int, int, int, str]] = [
             (start_turn, 0, entry_id, start)
         ]
 
@@ -467,7 +473,7 @@ class PathFinder:
                     current_state,
                 )
 
-            if turn >= start_turn + self.max_horizen:
+            if turn >= start_turn + self.max_horizon:
                 continue
 
             current_zone = self.graph.zones[zone_name]
@@ -512,10 +518,10 @@ class PathFinder:
                 else:
                     next_priority_score = priority_score
 
-                #  ??? 到着時のターン数がmax_horizenよりデカかったら？
+                #  ??? 到着時のターン数がmax_horizonよりデカかったら？
                 if (
                     arrival_turn
-                    > start_turn + self.max_horizen
+                    > start_turn + self.max_horizon
                 ):
                     continue
 
@@ -524,7 +530,7 @@ class PathFinder:
                     neighbor_name
                 )
 
-                if not self.reservations._connection_is_available_during_move(
+                if not self.reservations.connection_is_available_during_move(
                     connection,
                     turn,
                     arrival_turn
@@ -584,56 +590,6 @@ class PathFinder:
         return path
 
 
-def find_cheapest_path(graph: Graph, start: str, end: str) -> list[str]:
-    infinity = (float("inf"), float("inf"))
-    costs = {name: infinity for name in graph.zones}
-    costs[start] = (0, 0)
-    previous: dict[str, str] = {}
-    unvisited = set(graph.zones.keys())
-
-    while unvisited:
-        current = min(unvisited, key=lambda name: costs[name])
-
-        if costs[current] == infinity:
-            break
-
-        if current == end:
-            break
-
-        unvisited.remove(current)
-
-        for neighdor_name in graph.get_neighbors(current):
-            neighdor_zone = graph.zones[neighdor_name]
-
-            if neighdor_zone.zone_type == "blocked":
-                continue
-
-            move_cost = MOVE_COST[neighdor_zone.zone_type]
-
-            current_cost, current_priority = costs[current]
-
-            if neighdor_zone.zone_type == "priority":
-                priority = current_priority = -1
-            else:
-                priority = current_priority
-
-            new_cost = (
-                current_cost + move_cost,
-                priority
-            )
-
-            if new_cost < costs[neighdor_name]:
-                costs[neighdor_name] = new_cost
-                previous[neighdor_name] = current
-
-    path = [end]
-    while path[-1] != start:
-        path.append(previous[path[-1]])
-    path.reverse()
-
-    return path
-
-
 class Drone:
     def __init__(
             self,
@@ -645,8 +601,6 @@ class Drone:
         self.path_index = 0  #今pathの何番目にいるか
         self.delivered = False
         # 移動中の時にだけ使う情報
-        self.in_transit_to: Optional[str] = None
-        self.turns_remaining = 0
         self.transit_connection: Optional[Connection] = None
 
 

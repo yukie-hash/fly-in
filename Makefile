@@ -4,7 +4,7 @@ PYTHON := python3
 MAP ?= maps/easy/01_linear_path.txt
 
 install:
-	$(PYTHON) -m pip install -r requirements.txt
+	$(PYTHON) -m pip install -e ".[dev]"
 
 run:
 	$(PYTHON) -m src $(MAP)
@@ -15,7 +15,7 @@ debug:
 clean:
 	find . -type f \( -name "*.pyc" -o -name "*.pyo" \) -delete
 	find . -type d -name "__pycache__" -empty -delete
-	rm -rf .mypy_cache
+	rm -rf .mypy_cache .pytest_cache .ruff_cache
 
 lint:
 	flake8 .

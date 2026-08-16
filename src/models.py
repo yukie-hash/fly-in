@@ -3,16 +3,17 @@ from typing import Optional
 
 from .terminal import colorize
 
+
 class Zone:
     def __init__(
             self,
-            name:str,
+            name: str,
             x: int,
             y: int,
             zone_type: str = "normal",
             max_drones: Optional[int] = 1,
             color: Optional[str] = None
-        ) -> None:
+    ) -> None:
         self.name = name
         self.x = x
         self.y = y
@@ -37,7 +38,7 @@ class Connection:
             zone2: str,
             max_link_capacity: int = 1,
             has_explicit_capacity: bool = False,
-        ) -> None:
+    ) -> None:
         self.zone1 = zone1
         self.zone2 = zone2
         self.max_link_capacity = max_link_capacity
@@ -59,6 +60,7 @@ class Connection:
             f"-{graph.zones[self.zone2].display_name()}"
         )
 
+
 class Graph:
     def __init__(self) -> None:
         self.zones: dict[str, Zone] = {}
@@ -71,7 +73,7 @@ class Graph:
             zone: Zone,
             is_start: bool = False,
             is_end: bool = False
-        ) -> None:
+    ) -> None:
         self.zones[zone.name] = zone
         if is_start:
             self.start_zone_name = zone.name
@@ -88,8 +90,8 @@ class Graph:
             if connection.zone1 == zone_name or connection.zone2 == zone_name:
                 neighbors.append(connection.other_side(zone_name))
         return neighbors
-    
-    def find_connection(self, zone_a :str, zone_b: str) -> Connection:
+
+    def find_connection(self, zone_a: str, zone_b: str) -> Connection:
         for connection in self.connections:
             if {connection.zone1, connection.zone2} == {zone_a, zone_b}:
                 return connection
@@ -101,10 +103,10 @@ class Drone:
             self,
             drone_id: str,
             path: list[tuple[int, str]]
-        ) -> None:
+    ) -> None:
         self.id = drone_id
         self.path = path
-        self.path_index = 0  #今pathの何番目にいるか
+        self.path_index = 0  # 今pathの何番目にいるか
         self.delivered = False
         # 移動中の時にだけ使う情報
         self.transit_connection: Optional[Connection] = None

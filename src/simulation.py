@@ -33,7 +33,7 @@ def simulate(graph: Graph, drones: list[Drone]) -> None:
 
             #  待機
             if current_zone_name == next_zone_name:
-                if turn == arrival_turn:  #  ???
+                if turn == arrival_turn:  # ???
                     drone.path_index += 1
                 continue
 
@@ -83,5 +83,5 @@ def simulate(graph: Graph, drones: list[Drone]) -> None:
                 if next_zone_name == graph.end_zone_name:
                     drone.delivered = True
         render_map(graph, turn, turn_moves)
-        
+
         turn += 1

@@ -6,7 +6,7 @@ from typing import Optional
 def extract_metadata(rest: str) -> dict[str, str]:
     if "[" not in rest:
         return {}
-    
+
     metadata_str = rest.split("[")[1].split("]")[0]
     metadata = {}
     for token in metadata_str.split():
@@ -29,7 +29,7 @@ def build_graph_from_map(filepath: str) -> tuple[int, Graph]:
 
         if line.startswith("nb_drones:"):
             nb_drones = int(line.split(":")[1].strip())
-        
+
         elif line.startswith(("start_hub:", "end_hub:", "hub:")):
             is_start = line.startswith("start_hub:")
             is_end = line.startswith("end_hub:")
@@ -49,7 +49,7 @@ def build_graph_from_map(filepath: str) -> tuple[int, Graph]:
 
             zone = Zone(name, x, y, zone_type, max_drones, color)
             graph.add_zone(zone, is_start=is_start, is_end=is_end)
-        
+
         elif line.startswith("connection:"):
             rest = line.split(":", 1)[1].strip()
             metadata = extract_metadata(rest)
@@ -79,9 +79,8 @@ def build_graph_from_map(filepath: str) -> tuple[int, Graph]:
         )
 
     if graph.end_zone_name is None:
-            raise ValueError(
-                "Not found end_hub in the map"
-            )
+        raise ValueError(
+            "Not found end_hub in the map"
+        )
 
     return nb_drones, graph
-

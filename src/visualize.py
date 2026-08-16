@@ -5,6 +5,7 @@ RESET = "\033[0m"
 GREEN = "\033[92m"
 YELLOW = "\033[93m"
 
+
 def render_map(graph: Graph, turn: int, turn_moves: list) -> None:
     """_summary_
 

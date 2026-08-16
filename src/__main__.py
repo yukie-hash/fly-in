@@ -5,7 +5,7 @@ from .parser import build_graph_from_map
 from .planning import MultiDronePathPlanner
 from .simulation import simulate
 
- 
+
 def main() -> None:
     if len(sys.argv) != 2:
         print(f"Usage: python -m {__package__} <map_file>")

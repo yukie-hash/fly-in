@@ -28,7 +28,7 @@ RAINBOW_CODES = (
     "\033[94m",  # blue
     "\033[95m",  # purple
 )
- 
+
 
 def colorize(text: str, color_name: Optional[str]) -> str:
     if color_name == "rainbow":
@@ -39,4 +39,3 @@ def colorize(text: str, color_name: Optional[str]) -> str:
     if color_name is None or color_name not in COLOR_CODES:
         return text
     return f"{COLOR_CODES[color_name]}{text}{RESET_CODE}"
-

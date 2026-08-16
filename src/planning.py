@@ -12,6 +12,7 @@ MOVE_COST = {
     "restricted": 2,
 }
 
+
 class ReservationTable:
     def __init__(self) -> None:
         #  キー：(zone_name, turn)
@@ -153,11 +154,11 @@ class ReservationTable:
                 drone_id
             )
 
-        for i in range(len(path) -1):
+        for i in range(len(path) - 1):
             departure_turn, current_zone = path[i]
             arrival_turn, next_zone = path[i + 1]
 
-            if current_zone == next_zone:  #  待機だったら
+            if current_zone == next_zone:  # 待機だったら
                 continue
 
             connection = graph.find_connection(
@@ -179,7 +180,6 @@ class ReservationTable:
                     drone_id
                 )
 
-    
     def connection_is_available_during_move(
         self,
         connection: Connection,
@@ -197,6 +197,7 @@ class ReservationTable:
                 return False
 
         return True
+
 
 class PathFinder:
     """予約表を考慮して、1台分の最短到着経路を探す
@@ -239,7 +240,7 @@ class PathFinder:
             turn, priority_score, _, zone_name = heapq.heappop(heap)
             current_state = (zone_name, turn)
 
-            if current_state in expanded: # 同じ状態を二度展開しない
+            if current_state in expanded:  # 同じ状態を二度展開しない
                 continue
 
             expanded.add(current_state)
@@ -274,11 +275,11 @@ class PathFinder:
                     entry_id += 1
                     heapq.heappush(
                         heap,
-                            (
-                                wait_turn,
-                                priority_score,
-                                entry_id,
-                                zone_name
+                        (
+                            wait_turn,
+                            priority_score,
+                            entry_id,
+                            zone_name
                         ),
                     )
 
@@ -345,16 +346,15 @@ class PathFinder:
                 entry_id += 1
                 heapq.heappush(
                     heap,
-                        (
-                            arrival_turn,
-                            next_priority_score,
-                            entry_id,
-                            neighbor_name
-                        ),
+                    (
+                        arrival_turn,
+                        next_priority_score,
+                        entry_id,
+                        neighbor_name
+                    ),
                 )
 
         return None
-
 
     def _reconstruct_path(
         self,
@@ -438,7 +438,7 @@ class MultiDronePathPlanner:
 
     def calculate_max_search_turns(
         self,
-        nb_drones: int        
+        nb_drones: int
     ) -> int:
         return (
             nb_drones

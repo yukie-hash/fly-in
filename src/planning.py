@@ -12,12 +12,6 @@ MOVE_COST = {
     "restricted": 2,
 }
 
-# MAX_SEARCH_TURNS = (
-#     len(graph.zones)
-#     * nb_drones
-#     * max(MOVE_COST.values())
-# )
-
 class ReservationTable:
     def __init__(self) -> None:
         #  キー：(zone_name, turn)
@@ -222,9 +216,9 @@ class PathFinder:
         start: str,
         end: str,
         drone_id: str,
+        max_search_turns: int,
         start_turn: int = 0
     ) -> Optional[list[tuple[int, str]]]:
-
         entry_id = 0
 
         # (到着ターン, priority評価, 同点比較用ID(TypeError対策), Zone名)
@@ -258,7 +252,7 @@ class PathFinder:
                     current_state,
                 )
 
-            if turn >= start_turn + self.max_horizon:
+            if turn >= start_turn + max_search_turns:
                 continue
 
             current_zone = self.graph.zones[zone_name]
@@ -310,11 +304,10 @@ class PathFinder:
                 else:
                     next_priority_score = priority_score
 
-                #  ??? 到着時のターン数がmax_horizonよりデカかったら？
                 # 探索上限を超える到着候補は追加しない
                 if (
                     arrival_turn
-                    > start_turn + self.max_horizon
+                    > start_turn + max_search_turns
                 ):
                     continue
 
@@ -409,6 +402,8 @@ class MultiDronePathPlanner:
         self,
         nb_drones: int
     ) -> list[Drone]:
+        max_search_turns = self.calculate_max_search_turns(nb_drones)
+
         drones = []
 
         for i in range(1, nb_drones + 1):
@@ -417,7 +412,8 @@ class MultiDronePathPlanner:
             path = self.pathfinder.find_path(
                 self.graph.start_zone_name,
                 self.graph.end_zone_name,
-                drone_id
+                drone_id,
+                max_search_turns
             )
 
             if path is None:
@@ -441,3 +437,13 @@ class MultiDronePathPlanner:
             )
 
         return drones
+
+    def calculate_max_search_turns(
+        self,
+        nb_drones: int        
+    ) -> int:
+        return (
+            nb_drones
+            * len(self.graph.zones)
+            * max(MOVE_COST.values())
+        )

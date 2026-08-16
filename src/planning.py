@@ -3,7 +3,7 @@ from __future__ import annotations
 import heapq
 from typing import Optional
 
-from .models import Connection, Graph, Zone
+from .models import Connection, Graph, Zone, Drone
 
 
 MOVE_COST = {
@@ -389,3 +389,55 @@ class PathFinder:
             path.append((turn, zone_name))
 
         return path
+
+
+class MultiDronePathPlanner:
+    """複数ドローンの経路を、予約を考慮しながら順番に計画する。
+    """
+    def __init__(
+        self,
+        graph: Graph
+    ) -> None:
+        self.graph = graph
+        self.reservations = ReservationTable()
+        self.pathfinder = PathFinder(
+            graph,
+            self.reservations
+        )
+
+    def plan_drone_paths(
+        self,
+        nb_drones: int
+    ) -> list[Drone]:
+        drones = []
+
+        for i in range(1, nb_drones + 1):
+            drone_id = f"D{i}"
+
+            path = self.pathfinder.find_path(
+                self.graph.start_zone_name,
+                self.graph.end_zone_name,
+                drone_id
+            )
+
+            if path is None:
+                print(
+                    f"{drone_id}: "
+                    "経路が見つかりませんでした"
+                )
+                continue
+
+            self.reservations.reserve_path(
+                self.graph,
+                path,
+                drone_id
+            )
+
+            drones.append(
+                Drone(
+                    drone_id,
+                    path
+                )
+            )
+
+        return drones

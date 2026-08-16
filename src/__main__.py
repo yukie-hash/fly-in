@@ -1,9 +1,8 @@
 from __future__ import annotations
 import sys
 
-from .models import Drone
 from .parser import build_graph_from_map
-from .planning import ReservationTable, PathFinder
+from .planning import MultiDronePathPlanner
 from .simulation import simulate
 
  
@@ -23,43 +22,10 @@ def main() -> None:
         print(f"Error: invalid map: {error}")
         sys.exit(1)
 
-    reservations = ReservationTable()
+    planner = MultiDronePathPlanner(graph)
 
-    pathfinder = PathFinder(
-        graph,
-        reservations
-    )
+    drones = planner.plan_drone_paths(nb_drones)
 
-    for i in range(1, nb_drones + 1):
-        drone_id = f"D{i}"
-
-        path = pathfinder.find_path(
-            graph.start_zone_name,
-            graph.end_zone_name,
-            drone_id
-        )
-
-        if path is None:
-            print(
-                f"{drone_id}:"
-                "経路が見つかりませんでした"
-            )
-            continue
-
-        reservations.reserve_path(
-            graph,
-            path,
-            drone_id
-        )
-
-    drones = []
-
-    drones.append(
-        Drone(
-            drone_id,
-            path
-        )
-    )
     print("\033[?7l", end="")
 
     try:

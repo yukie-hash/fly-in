@@ -400,6 +400,11 @@ class MultiDronePathPlanner:
         self,
         nb_drones: int
     ) -> list[Drone]:
+        start_zone_name = self.graph.start_zone_name
+        end_zone_name = self.graph.end_zone_name
+        if start_zone_name is None or end_zone_name is None:
+            raise ValueError("Start and end zones must be configured")
+
         max_search_turns = self.calculate_max_search_turns(nb_drones)
 
         drones = []
@@ -408,8 +413,8 @@ class MultiDronePathPlanner:
             drone_id = f"D{i}"
 
             path = self.pathfinder.find_path(
-                self.graph.start_zone_name,
-                self.graph.end_zone_name,
+                start_zone_name,
+                end_zone_name,
                 drone_id,
                 max_search_turns
             )
@@ -417,7 +422,7 @@ class MultiDronePathPlanner:
             if path is None:
                 print(
                     f"{drone_id}: "
-                    "経路が見つかりませんでした"
+                    "No route found"
                 )
                 continue
 

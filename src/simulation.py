@@ -1,9 +1,8 @@
 from .models import Graph, Drone
-from .visualize import TerminalRenderer
+from .visualize import render_map
 
 
 def simulate(graph: Graph, drones: list[Drone]) -> None:
-    renderer = TerminalRenderer(graph)
     for drone in drones:
         _, start_zone_name = drone.path[0]
         graph.zones[start_zone_name].occupants.add(drone.id)
@@ -83,6 +82,6 @@ def simulate(graph: Graph, drones: list[Drone]) -> None:
 
                 if next_zone_name == graph.end_zone_name:
                     drone.delivered = True
-        renderer.render(turn, turn_moves)
+        render_map(graph, turn, turn_moves)
         
         turn += 1

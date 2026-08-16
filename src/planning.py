@@ -205,11 +205,9 @@ class PathFinder:
         self,
         graph: Graph,
         reservations: ReservationTable,
-        max_horizon: int = 200
     ) -> None:
         self.graph = graph
         self.reservations = reservations
-        self.max_horizon = max_horizon
 
     def find_path(
         self,

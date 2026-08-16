@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import shutil
 
 if TYPE_CHECKING:
-    from .__main__ import Connection, Graph, Zone
+    from .models import Connection, Graph, Zone
 
 
 RESET = "\033[0m"

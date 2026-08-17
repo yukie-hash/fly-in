@@ -64,8 +64,8 @@ def build_graph_from_map(filepath: str) -> tuple[int, Graph]:
             if not line.startswith("nb_drones:"):
                 raise ValueError(
                     f"line {line_number}: "
-                "first data line must define nb_drones"
-            )
+                    "first data line must define nb_drones"
+                )
             first_data_line_seen = True
 
         if line.startswith("nb_drones:"):

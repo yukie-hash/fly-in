@@ -420,11 +420,9 @@ class MultiDronePathPlanner:
             )
 
             if path is None:
-                print(
-                    f"{drone_id}: "
-                    "No route found"
+                raise ValueError(
+                    f"Failed to plan a path for {drone_id}"
                 )
-                continue
 
             self.reservations.reserve_path(
                 self.graph,

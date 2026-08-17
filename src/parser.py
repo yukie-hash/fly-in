@@ -34,6 +34,10 @@ def extract_metadata(
             raise ValueError(
                 f"line {line_number}: invalid metadata '{token}'"
             )
+        if token.count("=") != 1:
+            raise ValueError(
+                            f"line {line_number}: invalid metadata '{token}'"
+            )
 
         key, value = token.split("=")
 
@@ -66,21 +70,21 @@ def build_graph_from_map(filepath: str) -> tuple[int, Graph]:
                     f"line {line_number}: "
                     "first data line must define nb_drones"
                 )
-            first_data_line_seen = True
 
-        if line.startswith("nb_drones:"):
-            try:
-                nb_drones = int(line.split(":")[1].strip())
-            #  intではない
-            except ValueError:
-                raise ValueError(
-                    f"line{line_number}: nb_drones must be an integer"
-                )
-            #  整数ではない
-            if nb_drones <= 0:
-                raise ValueError(
-                    f"line{line_number}: nb_drones must be positive"
-                )
+            if line.startswith("nb_drones:"):
+                try:
+                    nb_drones = int(line.split(":")[1].strip())
+                #  intではない
+                except ValueError:
+                    raise ValueError(
+                        f"line{line_number}: nb_drones must be an integer"
+                    )
+                #  整数ではない
+                if nb_drones <= 0:
+                    raise ValueError(
+                        f"line{line_number}: nb_drones must be positive"
+                    )
+            first_data_line_seen = True
 
         elif line.startswith(("start_hub:", "end_hub:", "hub:")):
             is_start = line.startswith("start_hub:")

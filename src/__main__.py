@@ -24,7 +24,11 @@ def main() -> None:
 
     planner = MultiDronePathPlanner(graph)
 
-    drones = planner.plan_drone_paths(nb_drones)
+    try:
+        drones = planner.plan_drone_paths(nb_drones)
+    except ValueError as error:
+        print(f"Error: {error}")
+        sys.exit(1)
 
     print("\033[?7l", end="")
 

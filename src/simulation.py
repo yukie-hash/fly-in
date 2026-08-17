@@ -7,7 +7,7 @@ def simulate(graph: Graph, drones: list[Drone]) -> None:
         _, start_zone_name = drone.path[0]
         graph.zones[start_zone_name].occupants.add(drone.id)
 
-    turn = 0
+    turn = 1
     while not all(drone.delivered for drone in drones):
         turn_moves = []
 
@@ -33,7 +33,7 @@ def simulate(graph: Graph, drones: list[Drone]) -> None:
 
             #  待機
             if current_zone_name == next_zone_name:
-                if turn == arrival_turn:  # ???
+                if turn == arrival_turn:
                     drone.path_index += 1
                 continue
 

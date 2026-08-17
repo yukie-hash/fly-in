@@ -53,10 +53,20 @@ def build_graph_from_map(filepath: str) -> tuple[int, Graph]:
     with open(filepath, encoding="utf-8") as file:
         lines = file.readlines()
 
+    first_data_line_seen = False
+
     for line_number, raw_line in enumerate(lines, start=1):
         line = raw_line.split("#")[0].strip()
         if not line:
             continue
+
+        if not first_data_line_seen:
+            if not line.startswith("nb_drones:"):
+                raise ValueError(
+                    f"line {line_number}: "
+                "first data line must define nb_drones"
+            )
+            first_data_line_seen = True
 
         if line.startswith("nb_drones:"):
             try:

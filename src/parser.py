@@ -108,19 +108,9 @@ def build_graph_from_map(filepath: str) -> tuple[int, Graph]:
                 raise ValueError(
                     f"line {line_number}: duplicate zone '{name}'"
                 )
-            #  Zone名の禁止文字チェック
-            if "-" in name or " " in name:
-                raise ValueError(
-                    f"line {line_number}: invalid zone name '{name}'"
-                )
 
-            try:
-                x = int(match.group("x"))
-                y = int(match.group("y"))
-            except ValueError:
-                raise ValueError(
-                    f"line {line_number}: zone coordinates must be integers"
-                )
+            x = int(match.group("x"))
+            y = int(match.group("y"))
 
             metadata = extract_metadata(match.group("metadata"), line_number)
 
@@ -187,7 +177,15 @@ def build_graph_from_map(filepath: str) -> tuple[int, Graph]:
                         f"duplicate connection '{zone1}-{zone2}'"
                     )
 
-            max_link_capacity = int(metadata.get("max_link_capacity", "1"))
+            try:
+                max_link_capacity = int(
+                    metadata.get("max_link_capacity", "1")
+                )
+            except ValueError:
+                raise ValueError(
+                    f"line {line_number}: "
+                    "max_link_capacity must be an integer"
+                )
             if max_link_capacity <= 0:
                 raise ValueError(
                     f"line {line_number}: "
@@ -201,6 +199,11 @@ def build_graph_from_map(filepath: str) -> tuple[int, Graph]:
                     max_link_capacity,
                     has_explicit_capacity="max_link_capacity" in metadata,
                 )
+            )
+
+        else:
+            raise ValueError(
+                f"line {line_number}: invalid syntax"
             )
 
     if nb_drones is None:

@@ -142,9 +142,16 @@ def build_graph_from_map(filepath: str) -> tuple[int, Graph]:
 
         elif line.startswith("connection:"):
             rest = line.split(":", 1)[1].strip()
-            metadata = extract_metadata(rest, line_number)
-            main_part = rest.split("[")[0].strip()
-            zone1, zone2 = main_part.split("-")
+            match = CONNECTION_PATTERN.fullmatch(rest)
+            if match is None:
+                raise ValueError(
+                    f"line {line_number}: invalid connection syntax"
+                )
+
+            zone1 = match.group("zone1")
+            zone2 = match.group("zone2")
+            metadata = extract_metadata(match.group("metadata"), line_number)
+
             #  定義済みのzoneのみをリンクする
             if zone1 not in graph.zones or zone2 not in graph.zones:
                 raise ValueError(

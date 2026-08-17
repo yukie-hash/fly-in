@@ -72,7 +72,6 @@ def build_graph_from_map(filepath: str) -> tuple[int, Graph]:
                     f"line{line_number}: nb_drones must be positive"
                 )
 
-
         elif line.startswith(("start_hub:", "end_hub:", "hub:")):
             is_start = line.startswith("start_hub:")
             is_end = line.startswith("end_hub:")
@@ -83,7 +82,16 @@ def build_graph_from_map(filepath: str) -> tuple[int, Graph]:
                 raise ValueError(
                     f"line {line_number}: invalid zone syntax"
                 )
-            
+
+            if is_start and graph.start_zone_name is not None:
+                raise ValueError(
+                    f"line {line_number}: start_hub must be defined once"
+                )
+            if is_end and graph.end_zone_name is not None:
+                raise ValueError(
+                    f"line {line_number}: end_hub must be defined once"
+                )
+
             name = match.group("name")
             #  zone_nameの重複がないか
             if name in graph.zones:
@@ -135,7 +143,6 @@ def build_graph_from_map(filepath: str) -> tuple[int, Graph]:
                     raise ValueError(
                         f"line {line_number}: max_drones must be positive"
                     )
-
 
             zone = Zone(name, x, y, zone_type, max_drones, color)
             graph.add_zone(zone, is_start=is_start, is_end=is_end)

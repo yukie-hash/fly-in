@@ -18,6 +18,13 @@ def main() -> None:
     except FileNotFoundError:
         print(f"Error: file not found: {map_file}")
         sys.exit(1)
+    except (
+        IsADirectoryError,
+        PermissionError,
+        UnicodeDecodeError,
+        OSError
+    ) as error:
+        print(f"Error: {error}")
     except ValueError as error:
         print(f"Error: invalid map: {error}")
         sys.exit(1)

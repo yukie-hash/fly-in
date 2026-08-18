@@ -3,6 +3,8 @@ from .visualize import render_map
 
 
 def simulate(graph: Graph, drones: list[Drone]) -> None:
+    simulation_output: list[str] = []
+
     for drone in drones:
         _, start_zone_name = drone.path[0]
         graph.zones[start_zone_name].occupants.add(drone.id)
@@ -82,6 +84,17 @@ def simulate(graph: Graph, drones: list[Drone]) -> None:
 
                 if next_zone_name == graph.end_zone_name:
                     drone.delivered = True
-        render_map(graph, turn, turn_moves)
+        render_map(graph, turn)
+
+        if turn_moves:
+            simulation_output.append(
+                " ".join(turn_moves)
+        )
 
         turn += 1
+
+    
+    print("\nSimulation Output:")
+    for line in simulation_output:
+        print(line)
+

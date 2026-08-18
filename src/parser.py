@@ -7,8 +7,8 @@ import re
 
 ZONE_PATTERN = re.compile(
     r"^(?P<name>[^\s-]+)\s+"
-    r"(?P<x>-?\d+)\s+"
-    r"(?P<y>-?\d+)"
+    r"(?P<x>[+-]?\d+)\s+"
+    r"(?P<y>[+-]?\d+)"
     r"(?:\s+\[(?P<metadata>[^\]]*)\])?$"
 )
 

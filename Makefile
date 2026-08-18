@@ -16,6 +16,7 @@ clean:
 	find . -type f \( -name "*.pyc" -o -name "*.pyo" \) -delete
 	find . -type d -name "__pycache__" -empty -delete
 	rm -rf .mypy_cache .pytest_cache .ruff_cache
+	rm -rf src/*.egg-info
 
 lint:
 	flake8 .

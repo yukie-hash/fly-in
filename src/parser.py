@@ -5,6 +5,10 @@ from typing import Optional
 import re
 
 
+NB_DRONES_PATTERN = re.compile(
+    r"^nb_drones:\s*(?P<count>[1-9]\d*)$"
+)
+
 ZONE_PATTERN = re.compile(
     r"^(?P<name>[^\s-]+)\s+"
     r"(?P<x>[+-]?\d+)\s+"
@@ -105,8 +109,13 @@ class MapParser:
                     )
 
                 if line.startswith("nb_drones:"):
+                    match = NB_DRONES_PATTERN.fullmatch(line)
+                    if match is None:
+                        raise ValueError(
+                            f"line {line_number}: invalid nb_drones syntax"
+                        )
                     try:
-                        nb_drones = int(line.split(":")[1].strip())
+                        nb_drones = int(match.group("count"))
                     #  intではない
                     except ValueError:
                         raise ValueError(

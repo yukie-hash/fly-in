@@ -8,6 +8,9 @@ RESET = "\033[0m"
 class TerminalRenderer:
     """Render graph occupancy as a colorized terminal snapshot."""
 
+    def __init__(self) -> None:
+        self.colorizer = TerminalColorizer()
+
     def render_map(self, graph: Graph, turn: int) -> None:
         """Print zone occupancy for one simulation turn.
 
@@ -18,8 +21,6 @@ class TerminalRenderer:
         print(f"\n=== {turn}ターン目 ===")
 
         print("Zones:")
-
-        colorizer = TerminalColorizer()
 
         for zone in graph.zones.values():
             capacity = "∞" if zone.max_drones is None else str(zone.max_drones)
@@ -36,7 +37,7 @@ class TerminalRenderer:
             )
 
             print(
-                f"{colorizer.colorize(zone.name, zone.color)}:{RESET} "
+                f"{self.colorizer.colorize(zone.name, zone.color)}:{RESET} "
                 f"{len(zone.occupants)}/{capacity}"
                 f"{drone_info}"
             )

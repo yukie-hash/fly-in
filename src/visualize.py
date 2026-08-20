@@ -6,12 +6,14 @@ RESET = "\033[0m"
 
 
 class TerminalRenderer():
+    """Render graph occupancy as a colorized terminal snapshot."""
+
     def render_map(self, graph: Graph, turn: int) -> None:
-        """_summary_
+        """Print zone occupancy for one simulation turn.
 
         Args:
-            turn (int): _description_
-            turn_moves (list): _description_
+            graph: Graph whose current state is displayed.
+            turn: Current simulation turn number.
         """
         print(f"\n=== {turn}ターン目 ===")
 

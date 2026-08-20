@@ -3,7 +3,15 @@ from .visualize import TerminalRenderer
 
 
 class Simulator():
+    """Execute planned drone routes one discrete turn at a time."""
+
     def simulate(self, graph: Graph, drones: list[Drone]) -> None:
+        """Simulate all routes and print visual and movement output.
+
+        Args:
+            graph: Graph containing mutable occupancy state.
+            drones: Drones with precomputed, scheduled paths.
+        """
         renderer = TerminalRenderer()
         simulation_output: list[str] = []
 

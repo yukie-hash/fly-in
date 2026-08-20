@@ -31,7 +31,18 @@ RAINBOW_CODES = (
 
 
 class TerminalColorizer():
+    """Apply ANSI foreground colors to terminal text."""
+
     def colorize(self, text: str, color_name: Optional[str]) -> str:
+        """Return text decorated with a supported ANSI color.
+
+        Args:
+            text: Text to decorate.
+            color_name: Requested color, ``rainbow``, or ``None``.
+
+        Returns:
+            ANSI-decorated text, or the original text for an unknown color.
+        """
         if color_name == "rainbow":
             return "".join(
                 f"{RAINBOW_CODES[index % len(RAINBOW_CODES)]}{character}"

@@ -20,11 +20,25 @@ CONNECTION_PATTERN = re.compile(
 
 
 class MapParsor():
+    """Parse and validate Fly-in map files."""
+
     def extract_metadata(
             self,
             metadata_str: Optional[str],
             line_number: int
     ) -> dict[str, str]:
+        """Parse a whitespace-separated metadata block.
+
+        Args:
+            metadata_str: Contents between the metadata brackets.
+            line_number: Source line used in validation messages.
+
+        Returns:
+            Mapping of metadata keys to values.
+
+        Raises:
+            ValueError: If an entry is malformed or a key is duplicated.
+        """
         if not metadata_str:
             return {}
 
@@ -57,6 +71,19 @@ class MapParsor():
         return metadata
 
     def build_graph_from_map(self, filepath: str) -> tuple[int, Graph]:
+        """Read a map file and construct its validated graph.
+
+        Args:
+            filepath: Path to the UTF-8 map file.
+
+        Returns:
+            Drone count and parsed graph.
+
+        Raises:
+            OSError: If the file cannot be read.
+            UnicodeDecodeError: If the file is not valid UTF-8.
+            ValueError: If the map syntax or values are invalid.
+        """
         graph = Graph()
         nb_drones: Optional[int] = None
 

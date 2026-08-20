@@ -14,7 +14,10 @@ MOVE_COST = {
 
 
 class ReservationTable:
+    """Track per-turn zone and connection reservations."""
+
     def __init__(self) -> None:
+        """Initialize empty zone and connection reservation tables."""
         #  キー：(zone_name, turn)
         #  値：そのZoneを予約しているドローンIDの集合
         self.zone_reservations: dict[
@@ -35,12 +38,12 @@ class ReservationTable:
         turn: int,
         drone_id: str
     ) -> None:
-        """指定ターンのZoneを予約する
+        """Reserve one zone for a drone at a specific turn.
 
         Args:
-            zone_name (str): _description_
-            turn (int): _description_
-            drone_id (str): _description_
+            zone_name: Name of the zone to reserve.
+            turn: Turn at which the zone is occupied.
+            drone_id: Identifier of the reserving drone.
         """
         key = (zone_name, turn)
 
@@ -55,12 +58,12 @@ class ReservationTable:
             turn: int,
             drone_id: str
     ) -> None:
-        """指定ターンのConnectionを予約する
+        """Reserve one connection for a drone at a specific turn.
 
         Args:
-            connection_name (str): _description_
-            turn (int): _description_
-            drone_id (str): _description_
+            connection_name: Canonical connection key.
+            turn: Turn at which the connection is occupied.
+            drone_id: Identifier of the reserving drone.
         """
         key = (connection_name, turn)
 
@@ -74,14 +77,14 @@ class ReservationTable:
         zone: Zone,
         turn: int,
     ) -> bool:
-        """指定ターンのZoneに空きがあるか確認する
+        """Return whether a zone has capacity at a turn.
 
         Args:
-            zone (Zone): _description_
-            turn (int): _description_
+            zone: Zone to inspect.
+            turn: Turn to inspect.
 
         Returns:
-            bool: _description_
+            ``True`` if another drone may reserve the zone.
         """
         if zone.max_drones is None:
             return True
@@ -99,14 +102,14 @@ class ReservationTable:
         connection: Connection,
         turn: int
     ) -> bool:
-        """指定ターンのConnectionに空きがあるか確認する
+        """Return whether a connection has capacity at a turn.
 
         Args:
-            connection (Connection): _description_
-            turn (int): _description_
+            connection: Connection to inspect.
+            turn: Turn to inspect.
 
         Returns:
-            bool: _description_
+            ``True`` if another drone may reserve the connection.
         """
         connection_name = self._make_connection_key(connection)
         key = (connection_name, turn)
@@ -124,7 +127,14 @@ class ReservationTable:
         self,
         connection: Connection
     ) -> str:
-        """Connectionを予約表用の文字列に変換する。"""
+        """Create an order-independent reservation key.
+
+        Args:
+            connection: Connection whose key is requested.
+
+        Returns:
+            Endpoint names sorted and joined by a hyphen.
+        """
         names = sorted([
             connection.zone1,
             connection.zone2
@@ -138,14 +148,12 @@ class ReservationTable:
         path: list[tuple[int, str]],
         drone_id: str
     ) -> None:
-        """決定した経路を予約する
+        """Reserve every zone and connection used by a path.
 
         Args:
-            graph (Graph): _description_
-            path (_type_): _description_
-
-        Returns:
-            _type_: _description_
+            graph: Graph used to resolve connections.
+            path: Sequence of ``(turn, zone_name)`` route states.
+            drone_id: Identifier of the drone owning the path.
         """
         for turn, zone_name in path:
             self.reserve_zone(
@@ -186,6 +194,16 @@ class ReservationTable:
         departure_turn: int,
         arrival_turn: int
     ) -> bool:
+        """Check connection capacity throughout a multi-turn movement.
+
+        Args:
+            connection: Connection to inspect.
+            departure_turn: Turn before the drone enters the connection.
+            arrival_turn: Turn at which the drone reaches its destination.
+
+        Returns:
+            ``True`` when capacity is available for every movement turn.
+        """
         for turn in range(
             departure_turn + 1,
             arrival_turn + 1
@@ -200,13 +218,19 @@ class ReservationTable:
 
 
 class PathFinder:
-    """予約表を考慮して、1台分の最短到着経路を探す
-    """
+    """Find one drone's earliest route around existing reservations."""
+
     def __init__(
         self,
         graph: Graph,
         reservations: ReservationTable,
     ) -> None:
+        """Initialize a path finder.
+
+        Args:
+            graph: Graph to search.
+            reservations: Shared reservations from previously planned drones.
+        """
         self.graph = graph
         self.reservations = reservations
 
@@ -218,6 +242,18 @@ class PathFinder:
         max_search_turns: int,
         start_turn: int = 0
     ) -> Optional[list[tuple[int, str]]]:
+        """Find the earliest capacity-safe route for one drone.
+
+        Args:
+            start: Start zone name.
+            end: Destination zone name.
+            drone_id: Identifier of the drone being planned.
+            max_search_turns: Maximum number of turns to explore.
+            start_turn: Initial route turn.
+
+        Returns:
+            Scheduled route states, or ``None`` if no route is found.
+        """
         entry_id = 0
 
         # (到着ターン, priority評価, 同点比較用ID(TypeError対策), Zone名)
@@ -364,6 +400,15 @@ class PathFinder:
         ],
         goal_state: tuple[str, int]
     ) -> list[tuple[int, str]]:
+        """Reconstruct a route from predecessor states.
+
+        Args:
+            previous: Mapping from each state to its predecessor.
+            goal_state: Final ``(zone_name, turn)`` state.
+
+        Returns:
+            Chronological ``(turn, zone_name)`` route states.
+        """
 
         state_path = [goal_state]
 
@@ -383,12 +428,17 @@ class PathFinder:
 
 
 class MultiDronePathPlanner:
-    """複数ドローンの経路を、予約を考慮しながら順番に計画する。
-    """
+    """Plan multiple drone routes sequentially with shared reservations."""
+
     def __init__(
         self,
         graph: Graph
     ) -> None:
+        """Initialize a planner for a graph.
+
+        Args:
+            graph: Graph on which all drone routes are planned.
+        """
         self.graph = graph
         self.reservations = ReservationTable()
         self.pathfinder = PathFinder(
@@ -400,6 +450,17 @@ class MultiDronePathPlanner:
         self,
         nb_drones: int
     ) -> list[Drone]:
+        """Plan and reserve routes for all requested drones.
+
+        Args:
+            nb_drones: Number of drones to create and route.
+
+        Returns:
+            Drones containing scheduled paths.
+
+        Raises:
+            ValueError: If endpoints are missing or a route cannot be found.
+        """
         start_zone_name = self.graph.start_zone_name
         end_zone_name = self.graph.end_zone_name
         if start_zone_name is None or end_zone_name is None:
@@ -443,6 +504,14 @@ class MultiDronePathPlanner:
         self,
         nb_drones: int
     ) -> int:
+        """Calculate a conservative search horizon.
+
+        Args:
+            nb_drones: Number of drones being planned.
+
+        Returns:
+            Maximum turns explored by each path search.
+        """
         return (
             nb_drones
             * len(self.graph.zones)

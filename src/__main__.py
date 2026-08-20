@@ -7,6 +7,7 @@ from .simulation import Simulator
 
 
 def main() -> None:
+    """Run the command-line drone planning and simulation workflow."""
     if len(sys.argv) != 2:
         print(f"Usage: python -m {__package__} <map_file>")
         sys.exit(1)

@@ -4,6 +4,7 @@ from .terminal import TerminalColorizer
 
 RESET = "\033[0m"
 
+
 class TerminalRenderer():
     def render_map(self, graph: Graph, turn: int) -> None:
         """_summary_
@@ -14,7 +15,7 @@ class TerminalRenderer():
         """
         print(f"\n=== {turn}ターン目 ===")
 
-        print(f"Zones:")
+        print("Zones:")
 
         colorizer = TerminalColorizer()
 

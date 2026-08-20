@@ -1,6 +1,7 @@
 from .models import Graph, Drone
 from .visualize import TerminalRenderer
 
+
 class Simulator():
     def simulate(self, graph: Graph, drones: list[Drone]) -> None:
         renderer = TerminalRenderer()
@@ -90,12 +91,10 @@ class Simulator():
             if turn_moves:
                 simulation_output.append(
                     " ".join(turn_moves)
-            )
+                )
 
             turn += 1
 
-        
         print("\nSimulation Output:")
         for line in simulation_output:
             print(line)
-

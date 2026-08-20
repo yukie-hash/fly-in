@@ -38,7 +38,7 @@ class MapParsor():
                 )
             if token.count("=") != 1:
                 raise ValueError(
-                                f"line {line_number}: invalid metadata '{token}'"
+                    f"line {line_number}: invalid metadata '{token}'"
                 )
 
             key, value = token.split("=")
@@ -55,7 +55,6 @@ class MapParsor():
 
             metadata[key] = value
         return metadata
-
 
     def build_graph_from_map(self, filepath: str) -> tuple[int, Graph]:
         graph = Graph()
@@ -123,7 +122,10 @@ class MapParsor():
                 x = int(match.group("x"))
                 y = int(match.group("y"))
 
-                metadata = self.extract_metadata(match.group("metadata"), line_number)
+                metadata = self.extract_metadata(
+                    match.group("metadata"),
+                    line_number,
+                )
 
                 #  zone_typeのパース
                 valid_zone_types = {
@@ -168,7 +170,10 @@ class MapParsor():
 
                 zone1 = match.group("zone1")
                 zone2 = match.group("zone2")
-                metadata = self.extract_metadata(match.group("metadata"), line_number)
+                metadata = self.extract_metadata(
+                    match.group("metadata"),
+                    line_number,
+                )
 
                 #  定義済みのzoneのみをリンクする
                 if zone1 not in graph.zones or zone2 not in graph.zones:

@@ -48,13 +48,6 @@ class Connection:
     def has_capacity(self) -> bool:
         return len(self.travelers) < self.max_link_capacity
 
-    def display_name(self, graph: "Graph") -> str:
-        """両端の Zone に表示方法を委譲して、色付き接続名を返す。"""
-        return (
-            f"{graph.zones[self.zone1].display_name()}"
-            f"-{graph.zones[self.zone2].display_name()}"
-        )
-
 
 class Graph:
     def __init__(self) -> None:

@@ -41,6 +41,11 @@ def extract_metadata(
 
         key, value = token.split("=")
 
+        if key in metadata:
+            raise ValueError(
+                f"line {line_number}: duplicate metadata key '{key}'"
+            )
+
         if not key or not value:
             raise ValueError(
                 f"line {line_number}: invalid metadata '{token}'"

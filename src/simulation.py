@@ -58,7 +58,7 @@ def simulate(graph: Graph, drones: list[Drone]) -> None:
                     drone.transit_connection = connection
 
                 turn_moves.append(
-                    f"{drone.id}-{connection.display_name(graph)}"
+                    f"{drone.id}-{connection.zone1}-{connection.zone2}"
                 )
                 continue
 
@@ -79,7 +79,7 @@ def simulate(graph: Graph, drones: list[Drone]) -> None:
                 drone.path_index += 1
 
                 turn_moves.append(
-                    f"{drone.id}-{destination_zone.display_name()}"
+                    f"{drone.id}-{next_zone_name}"
                 )
 
                 if next_zone_name == graph.end_zone_name:

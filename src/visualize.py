@@ -2,8 +2,6 @@ from .models import Graph
 
 
 RESET = "\033[0m"
-GREEN = "\033[92m"
-YELLOW = "\033[93m"
 
 
 def render_map(graph: Graph, turn: int) -> None:
@@ -15,7 +13,7 @@ def render_map(graph: Graph, turn: int) -> None:
     """
     print(f"\n=== {turn}ターン目 ===")
 
-    print(f"{YELLOW}Zones:{RESET}")
+    print(f"Zones:")
 
     for zone in graph.zones.values():
         capacity = "∞" if zone.max_drones is None else str(zone.max_drones)
@@ -32,7 +30,7 @@ def render_map(graph: Graph, turn: int) -> None:
         )
 
         print(
-            f"{GREEN}{zone.name}:{RESET} "
+            f"{zone.display_name()}:{RESET} "
             f"{len(zone.occupants)}/{capacity}"
             f"{drone_info}"
         )

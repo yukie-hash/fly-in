@@ -30,12 +30,13 @@ RAINBOW_CODES = (
 )
 
 
-def colorize(text: str, color_name: Optional[str]) -> str:
-    if color_name == "rainbow":
-        return "".join(
-            f"{RAINBOW_CODES[index % len(RAINBOW_CODES)]}{character}"
-            for index, character in enumerate(text)
-        ) + RESET_CODE
-    if color_name is None or color_name not in COLOR_CODES:
-        return text
-    return f"{COLOR_CODES[color_name]}{text}{RESET_CODE}"
+class TerminalColorizer():
+    def colorize(self, text: str, color_name: Optional[str]) -> str:
+        if color_name == "rainbow":
+            return "".join(
+                f"{RAINBOW_CODES[index % len(RAINBOW_CODES)]}{character}"
+                for index, character in enumerate(text)
+            ) + RESET_CODE
+        if color_name is None or color_name not in COLOR_CODES:
+            return text
+        return f"{COLOR_CODES[color_name]}{text}{RESET_CODE}"

@@ -1,8 +1,6 @@
 from __future__ import annotations
 from typing import Optional
 
-from .terminal import colorize
-
 
 class Zone:
     def __init__(
@@ -26,9 +24,6 @@ class Zone:
         if self.max_drones is None:
             return True
         return len(self.occupants) < self.max_drones
-
-    def display_name(self) -> str:
-        return colorize(self.name, self.color)
 
 
 class Connection:

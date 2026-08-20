@@ -1,9 +1,9 @@
 from __future__ import annotations
 import sys
 
-from .parser import build_graph_from_map
+from .parser import MapParsor
 from .planning import MultiDronePathPlanner
-from .simulation import simulate
+from .simulation import Simulator
 
 
 def main() -> None:
@@ -13,8 +13,10 @@ def main() -> None:
 
     map_file = sys.argv[1]
 
+    parsor = MapParsor()
+
     try:
-        nb_drones, graph = build_graph_from_map(map_file)
+        nb_drones, graph = parsor.build_graph_from_map(map_file)
     except FileNotFoundError:
         print(f"Error: file not found: {map_file}")
         sys.exit(1)
@@ -39,8 +41,10 @@ def main() -> None:
 
     print("\033[?7l", end="")
 
+    simulator = Simulator()
+
     try:
-        simulate(graph, drones)
+        simulator.simulate(graph, drones)
     finally:
         print("\033[?7h", end="")
 

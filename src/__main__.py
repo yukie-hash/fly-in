@@ -1,7 +1,7 @@
 from __future__ import annotations
 import sys
 
-from .parser import MapParsor
+from .parser import MapParser
 from .planning import MultiDronePathPlanner
 from .simulation import Simulator
 
@@ -14,10 +14,10 @@ def main() -> None:
 
     map_file = sys.argv[1]
 
-    parsor = MapParsor()
+    parser = MapParser()
 
     try:
-        nb_drones, graph = parsor.build_graph_from_map(map_file)
+        nb_drones, graph = parser.build_graph_from_map(map_file)
     except FileNotFoundError:
         print(f"Error: file not found: {map_file}")
         sys.exit(1)
@@ -28,6 +28,7 @@ def main() -> None:
         OSError
     ) as error:
         print(f"Error: {error}")
+        sys.exit(1)
     except ValueError as error:
         print(f"Error: invalid map: {error}")
         sys.exit(1)

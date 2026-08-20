@@ -19,7 +19,7 @@ CONNECTION_PATTERN = re.compile(
 )
 
 
-class MapParsor():
+class MapParser:
     """Parse and validate Fly-in map files."""
 
     def extract_metadata(

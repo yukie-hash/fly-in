@@ -2,7 +2,7 @@ from .models import Graph, Drone
 from .visualize import TerminalRenderer
 
 
-class Simulator():
+class Simulator:
     """Execute planned drone routes one discrete turn at a time."""
 
     def simulate(self, graph: Graph, drones: list[Drone]) -> None:

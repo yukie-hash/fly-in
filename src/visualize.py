@@ -5,7 +5,7 @@ from .terminal import TerminalColorizer
 RESET = "\033[0m"
 
 
-class TerminalRenderer():
+class TerminalRenderer:
     """Render graph occupancy as a colorized terminal snapshot."""
 
     def render_map(self, graph: Graph, turn: int) -> None:

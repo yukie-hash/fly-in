@@ -30,7 +30,7 @@ RAINBOW_CODES = (
 )
 
 
-class TerminalColorizer():
+class TerminalColorizer:
     """Apply ANSI foreground colors to terminal text."""
 
     def colorize(self, text: str, color_name: Optional[str]) -> str:

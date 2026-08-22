@@ -12,7 +12,7 @@ class TerminalRenderer:
         self.colorizer = TerminalColorizer()
 
     def render_map(self, graph: Graph, turn: int) -> None:
-        """Print zone occupancy and connection occupqncy
+        """Print zone occupancy and connection occupancy
         for one simulation turn.
 
         Args:
@@ -43,14 +43,15 @@ class TerminalRenderer:
                 f"{drone_info}"
             )
 
+        connection_printed = False
+
         for connection in graph.connections:
             if connection.travelers:
-                print("\nConnections:")
+                if not connection_printed:
+                    print("\nConnections:")
+                    connection_printed = True
 
-                if connection.max_link_capacity is None:
-                    capacity = "∞"
-                else:
-                    capacity = str(connection.max_link_capacity)
+                capacity = str(connection.max_link_capacity)
 
                 occupants = " ".join(
                     f"{drone_id}"

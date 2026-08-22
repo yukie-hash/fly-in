@@ -96,10 +96,9 @@ class Simulator:
                         drone.delivered = True
             renderer.render_map(graph, turn)
 
-            if turn_moves:
-                simulation_output.append(
-                    " ".join(turn_moves)
-                )
+            simulation_output.append(
+                " ".join(turn_moves)
+            )
 
             turn += 1
 

@@ -43,6 +43,55 @@ The simulation ends when all drones have reached the end zone. Movements for eac
 
 For each turn, the terminal displays the current occupancy, maximum capacity, and IDs of the drones occupying every zone. If a zone has a `color` value, an ANSI color is applied to make changes in the network state easier to follow. The start and end zones are displayed with `∞` to represent unlimited capacity.
 
+### Example
+### Input
+
+```text
+nb_drones: 2
+start_hub: start 0 0
+hub: junction 1 0 [max_drones=2]
+hub: path_a 2 1
+hub: path_b 2 -1
+end_hub: goal 3 0
+connection: start-junction [max_link_capacity=2]
+connection: junction-path_a
+connection: junction-path_b
+connection: path_a-goal
+connection: path_b-goal
+```
+
+### Expected Output
+```text
+=== Turn 1 ===
+Zones:
+start: 0/∞
+junction: 2/2 [D1 D2]
+path_a: 0/1
+path_b: 0/1
+goal: 0/∞
+
+=== Turn 2 ===
+Zones:
+start: 0/∞
+junction: 0/2
+path_a: 1/1 [D1]
+path_b: 1/1 [D2]
+goal: 0/∞
+
+=== Turn 3 ===
+Zones:
+start: 0/∞
+junction: 0/2
+path_a: 0/1
+path_b: 0/1
+goal: 2/∞ [D1 D2]
+
+Simulation Output:
+D1-junction D2-junction
+D1-path_a D2-path_b
+D1-goal D2-goal
+```
+
 ## Instructions
 
 ### Requirements
@@ -162,32 +211,79 @@ However, once a route has been determined for an earlier drone, it is not replan
 
 ## Visualization
 
-For each turn, the program displays the current number of drones in each zone, its maximum capacity, and the drones currently occupying it. This makes it easier to track drone positions and congestion turn by turn, which can be difficult to understand from the Simulation Output alone. If a zone has a `color` value specified in the map, the corresponding color is applied to make zones easier to distinguish visually.
+For each turn, the program displays the current number of drones in each zone, its maximum capacity, and the drones currently occupying it. In connection the current number of drones, maximum capacity, and the drones currently present are displayed only if there are drones present. This makes it easier to track drone positions and congestion turn by turn, which can be difficult to understand from the Simulation Output alone. If a zone has a `color` value specified in the map, the corresponding color is applied to make zones easier to distinguish visually.
 
 ### Example
-
 ```text
-=== Turn 1 ===
+=== 1ターン目 ===
 Zones:
-start: 0/∞
-junction: 2/2 [D1 D2]
-path_a: 0/1
-path_b: 0/1
+start: 3/∞ [D2 D4 D5]
+slow_path1: 0/1
+slow_path2: 0/1
+fast_junction: 1/2 [D1]
+fast_path: 0/1
+merge_point: 0/3
 goal: 0/∞
 
-=== Turn 2 ===
+Connections:
+start-slow_path1 1/1 [D3]
+
+=== 2ターン目 ===
 Zones:
-start: 0/∞
-junction: 0/2
-path_a: 1/1 [D1]
-path_b: 1/1 [D2]
+start: 2/∞ [D4 D5]
+slow_path1: 1/1 [D3]
+slow_path2: 0/1
+fast_junction: 1/2 [D2]
+fast_path: 1/1 [D1]
+merge_point: 0/3
 goal: 0/∞
 
-=== Turn 3 ===
+=== 3ターン目 ===
+Zones:
+start: 1/∞ [D5]
+slow_path1: 0/1
+slow_path2: 1/1 [D3]
+fast_junction: 1/2 [D4]
+fast_path: 1/1 [D2]
+merge_point: 1/3 [D1]
+goal: 0/∞
+
+=== 4ターン目 ===
 Zones:
 start: 0/∞
-junction: 0/2
-path_a: 0/1
-path_b: 0/1
-goal: 2/∞ [D1 D2]
-```
+slow_path1: 0/1
+slow_path2: 0/1
+fast_junction: 1/2 [D5]
+fast_path: 1/1 [D4]
+merge_point: 2/3 [D3 D2]
+goal: 1/∞ [D1]
+
+=== 5ターン目 ===
+Zones:
+start: 0/∞
+slow_path1: 0/1
+slow_path2: 0/1
+fast_junction: 0/2
+fast_path: 1/1 [D5]
+merge_point: 1/3 [D4]
+goal: 3/∞ [D1 D3 D2]
+
+=== 6ターン目 ===
+Zones:
+start: 0/∞
+slow_path1: 0/1
+slow_path2: 0/1
+fast_junction: 0/2
+fast_path: 0/1
+merge_point: 1/3 [D5]
+goal: 4/∞ [D4 D1 D3 D2]
+
+=== 7ターン目 ===
+Zones:
+start: 0/∞
+slow_path1: 0/1
+slow_path2: 0/1
+fast_junction: 0/2
+fast_path: 0/1
+merge_point: 0/3
+goal: 5/∞ [D1 D2 D3 D4 D5]

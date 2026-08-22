@@ -43,6 +43,55 @@ Fly-inは、複数のドローンを開始ゾーンから終了ゾーンまで�
 
 各ターンで、すべてのゾーンの現在の占有数、最大容量、滞在中のドローンIDをターミナルに表示します。ゾーンに`color`が指定されている場合はANSIカラーを適用し、ネットワーク上の状態変化を追跡しやすくします。開始・終了ゾーンは無制限容量として`∞`で表示されます。
 
+### Example
+### Input
+
+```text
+nb_drones: 2
+start_hub: start 0 0
+hub: junction 1 0 [max_drones=2]
+hub: path_a 2 1
+hub: path_b 2 -1
+end_hub: goal 3 0
+connection: start-junction [max_link_capacity=2]
+connection: junction-path_a
+connection: junction-path_b
+connection: path_a-goal
+connection: path_b-goal
+```
+
+### Expected Output
+```text
+=== Turn 1 ===
+Zones:
+start: 0/∞
+junction: 2/2 [D1 D2]
+path_a: 0/1
+path_b: 0/1
+goal: 0/∞
+
+=== Turn 2 ===
+Zones:
+start: 0/∞
+junction: 0/2
+path_a: 1/1 [D1]
+path_b: 1/1 [D2]
+goal: 0/∞
+
+=== Turn 3 ===
+Zones:
+start: 0/∞
+junction: 0/2
+path_a: 0/1
+path_b: 0/1
+goal: 2/∞ [D1 D2]
+
+Simulation Output:
+D1-junction D2-junction
+D1-path_a D2-path_b
+D1-goal D2-goal
+```
+
 ## Instructions
 
 ### 必要環境
@@ -163,32 +212,81 @@ https://www.youtube.com/watch?v=EFg3u_E6eHU
 
 
 ## 視覚表現
-各ターンについて、ゾーンの現在のドローン数、最大容量、滞在しているドローンを表示します。これにより、Simulation Outputだけでは把握しにくいドローンの位置や混雑状況をターンごとに確認できます。また、マップでcolorが指定されたゾーンには対応する色を適用し、ゾーンを視覚的に区別しやすくしています。 
+各ターンについて、ゾーンの現在のドローン数、最大容量、滞在しているドローンを表示します。コネクションでは、滞在しているドローンがある場合のみ、現在のドローン数、最大容量、滞在しているドローンを表示します。これにより、Simulation Outputだけでは把握しにくいドローンの位置や混雑状況をターンごとに確認できます。また、マップでcolorが指定されたゾーンには対応する色を適用し、ゾーンを視覚的に区別しやすくしています。
 
 ### 表示例:   
 ```
 === 1ターン目 ===
 Zones:
-start: 0/∞
-junction: 2/2 [D1 D2]
-path_a: 0/1
-path_b: 0/1
+start: 3/∞ [D2 D4 D5]
+slow_path1: 0/1
+slow_path2: 0/1
+fast_junction: 1/2 [D1]
+fast_path: 0/1
+merge_point: 0/3
 goal: 0/∞
+
+Connections:
+start-slow_path1 1/1 [D3]
 
 === 2ターン目 ===
 Zones:
-start: 0/∞
-junction: 0/2
-path_a: 1/1 [D1]
-path_b: 1/1 [D2]
+start: 2/∞ [D4 D5]
+slow_path1: 1/1 [D3]
+slow_path2: 0/1
+fast_junction: 1/2 [D2]
+fast_path: 1/1 [D1]
+merge_point: 0/3
 goal: 0/∞
 
 === 3ターン目 ===
 Zones:
+start: 1/∞ [D5]
+slow_path1: 0/1
+slow_path2: 1/1 [D3]
+fast_junction: 1/2 [D4]
+fast_path: 1/1 [D2]
+merge_point: 1/3 [D1]
+goal: 0/∞
+
+=== 4ターン目 ===
+Zones:
 start: 0/∞
-junction: 0/2
-path_a: 0/1
-path_b: 0/1
-goal: 2/∞ [D1 D2]
+slow_path1: 0/1
+slow_path2: 0/1
+fast_junction: 1/2 [D5]
+fast_path: 1/1 [D4]
+merge_point: 2/3 [D3 D2]
+goal: 1/∞ [D1]
+
+=== 5ターン目 ===
+Zones:
+start: 0/∞
+slow_path1: 0/1
+slow_path2: 0/1
+fast_junction: 0/2
+fast_path: 1/1 [D5]
+merge_point: 1/3 [D4]
+goal: 3/∞ [D1 D3 D2]
+
+=== 6ターン目 ===
+Zones:
+start: 0/∞
+slow_path1: 0/1
+slow_path2: 0/1
+fast_junction: 0/2
+fast_path: 0/1
+merge_point: 1/3 [D5]
+goal: 4/∞ [D4 D1 D3 D2]
+
+=== 7ターン目 ===
+Zones:
+start: 0/∞
+slow_path1: 0/1
+slow_path2: 0/1
+fast_junction: 0/2
+fast_path: 0/1
+merge_point: 0/3
+goal: 5/∞ [D1 D2 D3 D4 D5]
 ```
 

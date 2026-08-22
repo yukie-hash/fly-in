@@ -41,3 +41,23 @@ class TerminalRenderer:
                 f"{len(zone.occupants)}/{capacity}"
                 f"{drone_info}"
             )
+
+        for connection in graph.connections:
+            if connection.travelers:
+                print("\nConnections:")
+
+                if connection.max_link_capacity is None:
+                    capacity = "∞"
+                else:
+                    capacity = str(connection.max_link_capacity)
+
+                occupants = " ".join(
+                    f"{drone_id}"
+                    for drone_id in connection.travelers
+                )
+
+                print(
+                    f"{connection.zone1}-{connection.zone2} "
+                    f"{len(connection.travelers)}/{capacity} "
+                    f"[{occupants}]"
+                )

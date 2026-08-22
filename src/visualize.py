@@ -12,7 +12,8 @@ class TerminalRenderer:
         self.colorizer = TerminalColorizer()
 
     def render_map(self, graph: Graph, turn: int) -> None:
-        """Print zone occupancy for one simulation turn.
+        """Print zone occupancy and connection occupqncy
+        for one simulation turn.
 
         Args:
             graph: Graph whose current state is displayed.

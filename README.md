@@ -2,172 +2,172 @@
 
 ## Description
 
-### 概要
+### Overview
 
-Fly-inは、複数のドローンを開始ゾーンから終了ゾーンまで、できるだけ少ないターン数で配送するための経路計画・シミュレーションプログラムです。ドローンは同時に移動できますが、ゾーンと接続には容量制限があります。そのため、各ドローンの経路だけでなく、出発・到着ターンも同時に計画します。
+Fly-in is a path-planning and simulation program designed to deliver multiple drones from a start zone to an end zone in as few turns as possible. Drones can move simultaneously, but zones and connections have capacity limits. Therefore, the program plans not only the route of each drone but also its departure and arrival turns.
 
-### 入力マップとグラフ
+### Input Map and Graph
 
-プログラムは、テキスト形式のマップファイルから、ドローン数、ゾーン、座標、メタデータ、ゾーン間の双方向接続を読み込みます。読み込んだデータは`Graph`、`Zone`、`Connection`オブジェクトとして管理されます。
+The program reads the number of drones, zones, coordinates, metadata, and bidirectional connections between zones from a text-based map file. The parsed data is managed as `Graph`, `Zone`, and `Connection` objects.
 
-パーサーは、ドローン数、座標、ゾーン名、ゾーンタイプ、容量、重複定義、未定義ゾーンへの接続などを検証します。不正な入力を検出した場合は、原因を示すエラーを返します。
+The parser validates the number of drones, coordinates, zone names, zone types, capacities, duplicate definitions, connections to undefined zones, and other input constraints. If invalid input is detected, it returns an error indicating the cause.
 
-### ゾーンタイプ
+### Zone Types
 
-ゾーンには以下の4種類があります。
+There are four types of zones:
 
-- `normal`：標準ゾーン。到着まで1ターン必要です。
-- `blocked`：進入できないゾーンです。
-- `restricted`：到着まで2ターン必要です。
-- `priority`：移動コストは1ターンで、同等の経路候補で優先されます。
+- `normal`: A standard zone. Moving into it takes 1 turn.
+- `blocked`: A zone that cannot be entered.
+- `restricted`: Moving into this zone takes 2 turns.
+- `priority`: Moving into this zone takes 1 turn, and it is preferred among equivalent route candidates.
 
-### 容量制約
+### Capacity Constraints
 
-通常のゾーンに同時に滞在できるドローンは1機です。`max_drones`が指定されている場合は、指定された機数まで同時に滞在できます。開始ゾーンと終了ゾーンには容量制限がありません。
+By default, only one drone can occupy a normal zone at a time. If `max_drones` is specified, up to the specified number of drones can occupy the zone simultaneously. The start and end zones have unlimited capacity.
 
-接続の`max_link_capacity`は、同じターンにその接続を通過できるドローン数を制限します。`restricted`ゾーンへの移動では、移動中の全ターンにわたって接続容量を確保します。
+The `max_link_capacity` of a connection limits the number of drones that can use that connection during the same turn. When moving into a `restricted` zone, connection capacity is reserved for all turns during the movement.
 
-### 経路探索と予約表
+### Pathfinding and Reservation Table
 
-各ドローンの経路は、ゾーン名と到着ターンを状態として扱う最短経路探索によって計画されます。探索ではゾーンの移動コストに加え、先に計画されたドローンの予約も考慮します。
+The route of each drone is planned using a shortest-path search in which the state consists of the zone name and arrival turn. In addition to zone movement costs, the search takes into account reservations made by previously planned drones.
 
-予約表には、どのゾーンまたは接続を、どのドローンが、どのターンに使用するかが記録されます。新しい経路を探索する際は、容量に空きのあるゾーンと接続だけを候補にします。すぐに移動できない場合は、現在のゾーンで待機する状態も経路候補に加えます。
+The reservation table records which drone uses each zone or connection at each turn. When searching for a new route, only zones and connections with available capacity are considered. If the drone cannot move immediately, waiting in its current zone for one turn is also considered as a possible transition.
 
-### シミュレーション
+### Simulation
 
-シミュレーターは、計画済みの経路に従ってドローンの状態を1ターンずつ更新します。ドローンが出発すると元のゾーンから削除され、移動完了時に目的地のゾーンへ追加されます。`restricted`ゾーンへ移動する場合は、移動中のドローンを接続上の利用者として記録します。
+The simulator updates the state of each drone one turn at a time according to its planned route. When a drone departs, it is removed from its current zone and added to the destination zone when the movement is completed. When moving into a `restricted` zone, a drone in transit is recorded as a user of the connection.
 
-すべてのドローンが終了ゾーンに到着するとシミュレーションは終了します。各ターンの移動は`D<ID>-<zone>`または`D<ID>-<connection>`の形式で出力します。
+The simulation ends when all drones have reached the end zone. Movements for each turn are output in the format `D<ID>-<zone>` or `D<ID>-<connection>`.
 
-### 視覚表示
+### Visualization
 
-各ターンで、すべてのゾーンの現在の占有数、最大容量、滞在中のドローンIDをターミナルに表示します。ゾーンに`color`が指定されている場合はANSIカラーを適用し、ネットワーク上の状態変化を追跡しやすくします。開始・終了ゾーンは無制限容量として`∞`で表示されます。
+For each turn, the terminal displays the current occupancy, maximum capacity, and IDs of the drones occupying every zone. If a zone has a `color` value, an ANSI color is applied to make changes in the network state easier to follow. The start and end zones are displayed with `∞` to represent unlimited capacity.
 
 ## Instructions
 
-### 必要環境
+### Requirements
 
-- Python 3.10以上
+- Python 3.10 or later
 - pip
 - make
 
-### 依存関係のインストール
+### Installing Dependencies
 
 ```bash
 make install
 ```
 
-`pyproject.toml`に定義された開発用依存関係をインストールします。
+This installs the development dependencies defined in `pyproject.toml`.
 
-### デフォルトマップの実行
+### Running with the Default Map
 
 ```bash
 make run
 ```
 
-デフォルトでは`maps/easy/01_linear_path.txt`を使用します。
+By default, `maps/easy/01_linear_path.txt` is used.
 
-### マップを指定して実行
+### Running with a Specified Map
 
 ```bash
 make run MAP=maps/medium/02_circular_loop.txt
 ```
 
-`MAP`に入力ファイルのパスを指定します。
+Specify the path to the input file using `MAP`.
 
-### Pythonから直接実行
+### Running Directly with Python
 
 ```bash
 python3 -m src maps/easy/01_linear_path.txt
 ```
 
-### デバッグ実行
+### Debugging
 
 ```bash
 make debug MAP=maps/easy/01_linear_path.txt
 ```
 
-Python標準の`pdb`を使って起動します。
+This starts the program using Python's standard `pdb` debugger.
 
-### コード品質チェック
+### Code Quality Checks
 
 ```bash
 make lint
 ```
 
-`flake8`と指定オプション付きの`mypy`を実行します。
+This runs `flake8` and `mypy` with the required options.
 
-### 厳格な型チェック
+### Strict Type Checking
 
 ```bash
 make lint-strict
 ```
 
-`flake8`と`mypy --strict`を実行します。
+This runs `flake8` and `mypy --strict`.
 
-### 生成ファイルの削除
+### Cleaning Generated Files
 
 ```bash
 make clean
 ```
 
-`__pycache__`、mypyなどのキャッシュ、`egg-info`を削除します。
+This removes `__pycache__`, mypy and other cache files, and `egg-info`.
 
-## Resource
+## Resources
+
 - 初心者のためのダイクストラアルゴリズム
 https://qiita.com/knhr__/items/cb3ce311508337128714
-
 - 【Python】NetworkX 2.0の基礎的な使い方まとめ
 https://qiita.com/kzm4269/items/081ff2fdb8a6b0a6112f
-
 - 離散数学入門#5: 最短経路問題：ダイクストラ法とワーシャル–フロイド法
 https://www.youtube.com/watch?v=e6X2gDTZYCQ&list=LL&index=1
-
 -  ダイクストラアルゴリズムの仕組み   
 https://www.youtube.com/watch?v=EFg3u_E6eHU
 
-### AI Resouce
-- 関数、変数命名の相談
-- ディレクトリ構造の相談
-- 正規表現モジュールの実装例の解説
-- ダイクストラアルゴリズムの実装例の生成、解説、理解のための壁打ち
-- 経路探索方式や予約方式の比較
-- 探索上限の根拠の検討
-- エッジケースの列挙
-- flake8, mypyのチェック、修正
-- レビュー
-- docstringsの作成
-- subjectの要約、翻訳
+### AI Resources
 
-## アルゴリズムの選択と実装戦略
+- Consultation on function and variable naming
+- Consultation on directory structure
+- Explanation of implementation examples using Python's regular expression module
+- Generation and explanation of Dijkstra's algorithm implementation examples, and discussion to support understanding
+- Comparison of pathfinding and reservation strategies
+- Discussion of the rationale for the search horizon
+- Identification of edge cases
+- Checking and fixing `flake8` and `mypy` issues
+- Code review
+- Creation of docstrings
+- Summarization and translation of the subject
 
-### 経路探索：ダイクストラ法
+## Algorithm Choice and Implementation Strategy
 
-本プログラムの経路探索には、ゾーンごとに異なる移動時間を考慮できるダイクストラ法を採用しています。`normal`と`priority`への移動には1ターン、`restricted`への移動には2ターンが必要であり、`blocked`には進入できません。このように移動コストが一定ではないため、重み付きグラフの最短経路を求められるダイクストラ法が適しています。
+### Pathfinding: Dijkstra's Algorithm
 
-同じゾーンでも到着するターンによって予約状況が異なるため、探索状態を`(ゾーン名, 到着ターン)`として管理しています。また、移動だけでなく1ターンの待機も遷移候補に含めることで、混雑時には空きが生じるまで待機した経路も探索できます。同じターンに到着する候補では、`priority`ゾーンを通る経路を優先します。
+This program uses Dijkstra's algorithm for pathfinding because it can account for different movement times depending on the zone type. Moving into a `normal` or `priority` zone takes 1 turn, moving into a `restricted` zone takes 2 turns, and `blocked` zones cannot be entered. Since movement costs are not uniform, Dijkstra's algorithm is suitable for finding shortest paths in this weighted graph.
 
-### 複数ドローンの経路計画：予約表による逐次計画
+Because the reservation status of a zone may differ depending on the arrival turn, each search state is represented as `(zone name, arrival turn)`. In addition to movement, waiting for 1 turn is included as a possible transition, allowing the search to find routes that wait for capacity to become available when the network is congested. Among candidates that arrive on the same turn, routes passing through `priority` zones are preferred.
 
-複数のドローンが同じ最短経路に集中すると、ゾーンや接続の容量によって待機が発生し、全体の到着に時間がかかります。そこで本プログラムでは、予約表を用いてドローンを1機ずつ逐次的に計画します。
+### Multi-Drone Path Planning: Sequential Planning with a Reservation Table
 
-経路が決定したドローンについて、使用するゾーンと接続をターン単位で予約し、後続のドローンは既存の予約を考慮して経路を探索します。これにより、各ターンにおいてゾーンや接続の容量を超える経路を計画段階で除外します。ある経路が混雑している場合、空くまで待機するだけでなく、別の経路の方が早く到着できればそちらを選択します。これにより、特定の経路への集中を避け、複数の経路を並行して利用できます。
+If multiple drones choose the same shortest path, they may become concentrated on the same route, causing delays due to zone and connection capacity limits. To address this, the program uses a reservation table and plans the drones sequentially, one at a time.
 
-また、restrictedへの移動には2ターン必要なため、移動中に他のドローンが接続容量を超えて同じ接続を利用しないよう、移動に必要なターンにわたって接続を予約します。
+Once a drone's route has been determined, the zones and connections it will use are reserved for each corresponding turn. Subsequent drones search for their routes while taking existing reservations into account. This excludes routes that would exceed zone or connection capacities at any given turn during the planning stage. If a route is congested, a drone may wait for capacity to become available or choose another route if doing so allows it to arrive earlier. This helps prevent drones from becoming concentrated on a single route and allows multiple routes to be used in parallel.
 
-### 利点と制約
+Because moving into a `restricted` zone takes 2 turns, the required connection is reserved for the necessary turns during transit so that other drones do not exceed its connection capacity.
 
-この方式は、全ドローンの状態を同時に探索する方法と比べて計算量と実装の複雑さを抑えつつ、容量制約を守りながら複数の経路を利用してドローンを並行して移動させられる点が利点です。
+### Advantages and Limitations
 
-一方で、一度決定した先行ドローンの経路を後から再計画しないため、ドローンの計画順序によって結果が変化し、全体の最短ターン数を常に保証するものではありません。
+Compared with searching the states of all drones simultaneously, this approach reduces computational and implementation complexity while allowing drones to move in parallel across multiple routes without violating capacity constraints.
 
+However, once a route has been determined for an earlier drone, it is not replanned when subsequent drones are considered. As a result, the final result may depend on the order in which drones are planned, and the program does not guarantee the minimum possible number of turns for all drones to reach the destination.
 
-## 視覚表現
-各ターンについて、ゾーンの現在のドローン数、最大容量、滞在しているドローンを表示します。これにより、Simulation Outputだけでは把握しにくいドローンの位置や混雑状況をターンごとに確認できます。また、マップでcolorが指定されたゾーンには対応する色を適用し、ゾーンを視覚的に区別しやすくしています。 
+## Visualization
 
-### 表示例:   
-```
-=== 1ターン目 ===
+For each turn, the program displays the current number of drones in each zone, its maximum capacity, and the drones currently occupying it. This makes it easier to track drone positions and congestion turn by turn, which can be difficult to understand from the Simulation Output alone. If a zone has a `color` value specified in the map, the corresponding color is applied to make zones easier to distinguish visually.
+
+### Example
+
+```text
+=== Turn 1 ===
 Zones:
 start: 0/∞
 junction: 2/2 [D1 D2]
@@ -175,7 +175,7 @@ path_a: 0/1
 path_b: 0/1
 goal: 0/∞
 
-=== 2ターン目 ===
+=== Turn 2 ===
 Zones:
 start: 0/∞
 junction: 0/2
@@ -183,7 +183,7 @@ path_a: 1/1 [D1]
 path_b: 1/1 [D2]
 goal: 0/∞
 
-=== 3ターン目 ===
+=== Turn 3 ===
 Zones:
 start: 0/∞
 junction: 0/2
@@ -191,4 +191,3 @@ path_a: 0/1
 path_b: 0/1
 goal: 2/∞ [D1 D2]
 ```
-

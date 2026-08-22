@@ -60,32 +60,8 @@ connection: path_a-goal
 connection: path_b-goal
 ```
 
-### Expected Output
+### Expected Simulation Output
 ```text
-=== Turn 1 ===
-Zones:
-start: 0/∞
-junction: 2/2 [D1 D2]
-path_a: 0/1
-path_b: 0/1
-goal: 0/∞
-
-=== Turn 2 ===
-Zones:
-start: 0/∞
-junction: 0/2
-path_a: 1/1 [D1]
-path_b: 1/1 [D2]
-goal: 0/∞
-
-=== Turn 3 ===
-Zones:
-start: 0/∞
-junction: 0/2
-path_a: 0/1
-path_b: 0/1
-goal: 2/∞ [D1 D2]
-
 Simulation Output:
 D1-junction D2-junction
 D1-path_a D2-path_b
